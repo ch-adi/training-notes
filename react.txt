@@ -1,0 +1,1504 @@
+/*     React Training Notes
+
+- Intro
+- Stateless Components (aka 'function' or 'dumb' components)
+- Styles
+- Creating a list of components from an Array
+- Stateful Components (aka State Containers)
+- More on Binding 'this' for methods passed in as props
+- A better way to bind this
+- CSS modules
+- Debugging and Errors Handling (Error Boundaries)
+- Organising Components
+- Component Lifecycle
+- Returning Adjancent Elements - React 16
+- Higher Order Components
+- The async nature of setState()
+- Validating Props
+- Using References ("ref")
+- Context API
+- Planning a React Application
+- Disabling a Feature
+- Using Images
+- Link to the home page
+- 
+
+
+Some style examples can be found in CSS_notes.txt
+- Modals
+- Toolbar (desktop)
+- Side Draw (small device)
+- Using Media Queries to Disable an Element
+
+
+*/
+
+/*    Intro
+
+What makes React special is that when the state updates, React looks through changes in a virtual DOM, which is a fast process, and then only changes the relevant elements in the actual DOM. Working with the DOM is a slow process.
+
+Components are the main building block of a React application. A component represents a self-contained piece of UI. A component will usually display some data and be able handle 
+some kind of user interaction. 
+
+Components differentiate two different types of data: properties and state.
+
+Props (short for properties) are a Component’s configuration, its arguments if you may. They are received from above and immutable as far as the component receiving them is concerned. With boolean props you don't need to pass in something like active={true}. Just pass in active on its own:
+
+            <Child active />   // rather than <Child active={true}>
+
+The state starts with a default value when a component mounts and then suffers from mutations over time (mostly generated from user events). It’s a serialisable representation of one point in time — a snapshot. ***React only re-renders (i.e. updates the DOM) if the state or props have changed. Updating the state requires the use of the special react function this.setState() ****. And, it is the call to this special function  that signals for React to check each component to see, after a change in props and state, if the DOM needs to be updated. So setState is the key trigger for us; it makes our apps reactive and dynamic. 
+
+You should not use props in the state unless the props passed in are an initial value. And it's good practice to make this clear with props names like 'this.props.initialValue'.
+
+*/
+
+
+/*  Stateless Components (aka 'function' or 'dumb' components). 
+
+Components have varying levels of "smarts". Some that only take in props from other components
+don't even care about what those props are, they just use them. They also do not manage their own state. 
+
+Stateless components will still be re-rendered when their props change, but this is because their parents 
+state has changed, and that state is being passed in as a prop to the stateless component. Thus they are still
+dynamic (and reusable).
+
+React state can be tricky to manage so use stateless components as much as possible.
+Infact, you can really strip them down (and even leave them in the same file as their parent).
+
+While the following examples use functional components, stateless components can use the class keyword. Doing this opens up other react features, such as prop type validation and lifecycle hooks. Stateless component are more about not including state rather then being functional or class based.
+
+
+
+const Widget = (props) =>
+    <h1>{props.text}</h1>
+
+//or (in another file but without a render method again):
+
+export const Header = (props) => {
+    return (
+        <div>
+        // ... using the props
+        </div>
+    )
+}
+*/
+// The above example used curly braces, which is particularly useful in cases where you might need some logid before a return statement.
+
+
+/* Here is a full example (excluding CSS).
+
+We see that props allow you to pass information down the component tree. We can also include function
+references. This allows us to action state changing methods from a state containers, and
+thus change the state, but from a function component.
+
+Attribute names in JSX are slightly different to normal HTML. Often you use camel case. However class has to 
+be className.
+
+Curly braces inside JSX can be used to insert any valid single line JS expression. More complex, block-like code can be 
+placed in the render method or wrapped up into a class method. 
+
+Also, the input component uses props.name as a value. This allows for two way binding.
+
+Fuctional stateless components only need React to be imported; this allows us to use JSX and covertly converts it using createElement(). 
+(If you really wanted to, you could use createElement instead of JSX - JSX is just JavaScript). 
+
+We also see that the render method is only allowed to return a single node. Also, if it is multi-lined use brackets.
+
+In one of the p tags there is also an onClick attribute. We see that a parent method has been passed down as a prop (how this is done in the parent, particularly around the use of 'this' is discussed later). This means that a child element is listening for an event, and will then invoke an event handker function that could even be used to update a parent's state (if setState is called in the event handler).
+
+import React from 'react';
+
+const Person = (props) => {
+
+    return (
+        <div className="Person" style={style}>
+            <p onClick={props.click}>I am a person. My name is {props.name} and my age is {props.age}</p>
+            <p>{props.children}</p>
+            <input type="text" onChange={props.changed} value={props.name} />
+        </div>
+    );
+};
+
+export default Person;
+
+*/
+/*  Styles
+
+Side note. If you want to import google fonts, embed the link just above the title in index.html:
+
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,700" rel="stylesheet">
+    <title>My Burger</title>
+
+Then update index.css with the new font ("Open Sans" is the new font with the default sans-serif as a back up):
+
+    body {
+    margin: 0;
+    padding: 0;
+    font-family: "Open Sans", sans-serif;
+    }
+
+
+The following example is of an of in-line style inside the render method of a stateful component. 
+This is scoped to the component; no import needed but you cant use the full power of CSS.
+(This example already has Radium applied, which is why it has :hover - you can't normally use 
+psuedo selectors and media queries)
+
+Here we see backgroundColor instead of background-color. This is the normal React way; many things,
+like inline attributes, use camelCase. Sometimes with css properties, quotes around the key will work
+as well. Also, the values are in quotes. Despite looking like CSS this is acutally JS.
+
+    const style = {
+        backgroundColor: 'green',
+        color: 'white',
+        font: 'inherit',
+        border: '1px solid blue',
+        padding: '8px',
+        cursor: 'pointer',
+        ':hover': {
+            backgroundColor: 'lightgreen',
+            color: 'black',
+        },
+    };
+
+Now, in the related component just use style={style} as an attribute in the relevant element. 
+
+In our case we might actually place this object in the render method, particularly if there is conditional formating.
+
+We can also import a css file:
+import './Person.css'; // you will need the .css extension for non js files. However, like JSX this is just js.
+This hooked in with className in the component. 
+
+It may seem strange to be importing a CSS file into a JS file, but webpack see this imporat and inserts style tags into the HTML. 
+Once the app is running in the browers you can then see the styling, as normal, in the dev tools.
+
+/* Radium is a popular package for react. It allows in-line styles (so better scoped to components
+and allows for dynamic styling) but also allows psuedo selectors and media queries
+(unlike normal in-line styles). npm install --save radium
+Radium is used as a higher order component.
+Up above, in the style object, you can now add something like ':hover'. It must be in quotes.
+A media query has been included in the Person component. However, to make this query work,
+You must import the name export component StyleRoot, and wrap <App/> within.
+
+import Radium from 'radium';  // for stateless components
+import Radium, { StyleRoot } from 'radium'; // For our root App component
+export default Radium(App); // at the end of the file. Same in a stateless file
+
+// Example of Radium, inline styling and CSS import.
+// Also uses props.children - the content between the opening and closing tag
+const Person = (props) => {
+    // When style is used inline below it overrides the css className style (normal css rule).
+    const style = {
+        '@media (min-width: 500px)': {
+            width: '450px',
+        },
+    };
+
+    return (
+        <div className="Person" style={style}>
+            <p onClick={props.click}>I am a person. My name is {props.name} and my age is {props.age}</p>
+            <p>{props.children}</p>
+            <input type="text" onChange={props.changed} value={props.name} />
+        </div>
+    );
+};
+*/
+/*
+In the upcoming section on stateful components, you can see Radium being applied with a media query and
+also an example of dynamic style allocation within the render method. Dynamic allocation happens in two ways. 
+One way involves using an inline style object, and doing a conditon check in the render method to change some 
+properties in the style object. The other involves some style changes based on the length of the list. 
+This approaches uses a classes array that pulls in classes from a css sheet as required. 
+
+Note: the syleroot wrapping in the return statement is necessary for Radium.
+Note: there is another section below on CSS modules.
+*/
+
+
+/* Creating a list of components from an Array
+
+Looping through an array to create an unordered list is very elegant. Say, in props, I have an array called hobbies:
+
+    <ul>
+        {this.props.hobbies.map((hobby, i) => <li key={i}>{hobby}</li>)}
+    </ul> 
+
+A more complex example exists in the stateful components section. It uses unique ids instead of keys, which is
+more efficient for rendering. 
+
+In another example the incoming props are an object of 'ingredients'. Each key is the ingredient name, and it's associated property is the number of that ingredient type. Here is a snippit from the upstream stateful component's state property, which is passed into our component of interest as props:
+
+        ingredients: {
+            salad: 1,
+            bacon: 1,
+            cheese: 2,
+            meat: 2
+        } 
+
+We map these ingredients out into <BurgerIngredients> components, which take a 'type' and applied a switch statement to determines the CSS styling applied to a simple div. 
+
+    let transformedIngredients = Object.keys(props.ingredients)
+        .map(igKey => {
+            return [...Array(props.ingredients[igKey])].map((_, index) => {
+                return <BurgerIngredient key={igKey + index} type={igKey}/>
+            });
+        });
+        .reduce((prevVal, currentVal) => {
+            return prevVal.concat(currentVal)
+        }, []);
+
+    if( transformedIngredients.length !== 0) {
+        transformedIngredients = <p>Plese start adding ingredients</p>;
+    }
+
+First, Object.keys() returns an array of the keys in ingredients: [salad, bacon, cheese, meat]. We use Object.keys() a lot since it is a udsful way to turn an object into a more workable array. 
+
+So, since this is an array we can use the map method to map a <BurgerIngredients> component to each element in the array (ie each igKey). Also, however, we need to capture multiples (like cheese and meat in this case), so we take this mapping down another level. The Array(arrayLength) method returns a array of undefined entries of length 'arrayLengt'. We spread this out into an array (thus making a copy) and apply map to it. The first argument in this second map's callback method is an underscore, '_'. This indicates that we do not care about this argument. We really jsut want to reach the optional index argument. This is used to provide a unique key (recall that we are allowed to render an array, but each element must have a unique id). 
+
+We then use the reduce function to flatten the array. If all entries are undefined, say because the user has not begun adding ingredients, then concat() will not have added any entries. We can then check the length and provide an instruction to start adding ingredients.
+
+Now, inside the render method, we add:
+
+        {transformedIngredients}
+   
+        
+As a side note, we can also use comparators to easily convert some values in an array to booleans:
+
+        for (let key in disabledInfo) {
+            disabledInfo[key] = disabledInfo[key] <= 0;  // replaces each element with either true or false
+        }
+
+
+
+*/
+
+
+/*  Stateful Components (aka State Containers)
+
+These other components are also called "containers" because they contain the state. Also unlike stateless components they have lifecycle hooks. Only use containers if you have a centralised component from which you need to manage state, or you need to manage lifecycle hooks. 
+
+Unlike stateless components, you will often use the 'this' keyword to refer to state and props.
+
+To use an internal 'state' we need to import and extend Component. Component also supplies 'setState()'. 
+
+    import React, { Component } from 'react';
+
+A component manages its own state internally, but besides setting an initial state a component has no business 
+fiddling with the state of its children. You could say the state is private.
+
+State is set up in the constructor as an object and updated inside class methods with the setState method. 
+SetState uses the properties from from the state and gives them new values. But, this method only 
+needs to reference those part of the state that are changing. Also, it is good practice to not mutate the state
+directly. Instead clone the relevant properties of the state object before updating and applying setState.
+
+The class declaration in TypeScript requires typings for props and state:
+
+    class SomeComponent extends React.Component<ISomeComponentProps, ISomeComponentState> {
+    // ...
+    }
+
+
+
+import React, { Component } from 'react';
+import Radium, { StyleRoot } from 'radium';
+import './App.css';
+import Person from './Person/Person';
+
+class App extends Component {
+    state = {
+        persons: [
+            { id: 'yb4687m', name: 'Max', age: 28 },   // It is common to use a unique ID (becomes a key prop in children)
+            { id: '8b87kkj', name: 'Manu', age: 85 },
+            { id: 'njnhbv7', name: 'Stephanie', age: 26 },
+        ],
+        showPersons: false,
+    }
+*/
+    // What follows is an event handling method.
+    // Down in the render method, don't just call event handling methods in JSX. Just pass a reference.
+    // (ie dont use '()' after the function name). Otherwise the method will be immediately invoked. 
+    // <input type="text" onChange={this.nameChangedHander} />
+
+    // Event handling methods like this are often passed as props to child components. This allows the child to listen
+    // for the event but still have the parent handle it's own state when an event fires on the child.
+    // If the handler does not reference the parent's state (when 'this' is the parent object/component), then
+    // <Child click={this.nameChangedHander} /> is good. (This child will listen for the event with onClick={props.click})
+
+    // But if state is referenced, as it is here, there is a problem. 'this' in the child will not be
+    // the same object (ie the parent). One alternative is arrow functions. 'this' takes on the surrounding 
+    // execution context in which the function is defined, which is the component(object) we want. Normally this would look like
+    // <Child click= {() => this.nameChangedHander()} />
+    // Notice that we do invoke the method here because it's being return from the arrow function.
+
+    // In reality, there will often, as in this case, be an event object to pass in:
+    // changed={(event) => this.nameChangedHandler(event, person.id)} 
+
+    // Another alterative to fix 'this' is .bind
+    // <Child click={this.nameChangedHander.bind(this)} /> or if the event is listened for within the parent, say within a
+    // button:
+    // <button onClick={this.nameChangedHander.bind(this)} />.
+    // (Dont forget React events use camel case. We use 'click' in the child example as a distingusing prop name).
+
+    // However, for performance reasons (the function is reallocated on every render)
+    // it is often recomended to move binding up into the constructor. 
+    // this.nameChangedHandler = this.nameChangedHander.bind(this). 
+    // (bind() creates a copy of the function in which 'this' is locked in for any execution context generated for the function.
+    // You can also use use arrow functions when the method is declared as a class property (like here)
+    /*
+    
+    nameChangedHandler = (event, id) => {
+        const personIndex = this.state.persons.findIndex(pers => {
+            return pers.id === id;
+        });
+        const person = { ...this.state.persons[personIndex] }; // could also use Object.assign({}, this.state.persons[personIndex]) or .slice() with no arguments
+
+        // This is an example of two way binding. We see person.name = event.target.value;
+        // In the child component is a text input element, which is 'target' on an event object (event objects are automatically
+        // passed into handlers. 'value' is the text entered by the user in a text input.
+        // Here we see the hander using value to update the state. And, this state is then passed in as a prop to be used elsewhere
+        // in the child. So we see another part of the UI dynamcially update as the text is written. As the user updates the text, the 
+        // state in the parent changes, which then updates the props in the child. 
+        // We also have this prop being assigned to the value attribute in the child, which means the the input box is pre loaded
+        // with the default name. See the current state right from the start is two-way binding.
+
+        person.name = event.target.value;
+        const persons = [...this.state.persons];
+        persons[personIndex] = person;
+        this.setState({ persons });
+    }
+
+    deletePersonHandler = (id) => {
+        // original way: while this worked, it is bad practice to directly mutate a passed in reference type.
+        // Always update state in an immutable way
+        // const { persons } = this.state;
+        // one alternative:
+        // const persons = this.state.persons.slice();  // we could also use Object.assign()
+        // For arrays we can also use the spread operator, [...myArr], or slice() with no args.
+        const personIndex = this.state.persons.findIndex(pers => {
+            return pers.id === id;
+        });
+        const persons = [...this.state.persons];
+        persons.splice(personIndex, 1);
+        this.setState({ persons });
+    }
+
+    togglePersonHandler = () => {
+        this.setState({
+            showPersons: !this.state.showPersons,
+        });
+    }
+
+    render() {
+        // example of in-line style. This is scoped to the component; no import needed but you cant use the full power of CSS
+        const style = {
+            backgroundColor: 'green',
+            color: 'white',
+            font: 'inherit',
+            border: '1px solid blue',
+            padding: '8px',
+            cursor: 'pointer',
+            ':hover': {
+                backgroundColor: 'lightgreen',
+                color: 'black',
+            },
+        };
+        let persons = null;
+
+
+
+          --------- Key Prop ------------
+            Here we see the key prop. For list type components this is a React requirement. React constantly 
+            compares the actual DOM (past) to the virtual React-DOM (future) to look for changes. 
+            It can't distinguish the components it will re-render the lot, which is less efficient.
+        
+                {this.state.persons.map((person, index) => {
+                    return <Person key={index} name={person.person} age={person.age} click={() => this.deletePersonHandler(index)} changed={this.nameChangedHandler.bind(this)} />;
+                })}
+        
+            Instead of the index, we could also use any unique identifier from the state. When we use index, 
+            that could change all components (say if the first is deleted). Then we are back with the same problem.
+        
+            We see an arrow function using the index argument. An alternative would .bind(this, index)
+       
+        // render is called everytime there is a state change. So any conditional checks on the state (and style) 
+        // should be inside this method.
+        if (this.state.showPersons) {
+            persons = (
+                <div>
+                    {this.state.persons.map((person) => {
+                        return <Person key={person.id} name={person.name} age={person.age} click={() => this.deletePersonHandler(person.id)} changed={(event) => this.nameChangedHandler(event, person.id)} />;
+                    })}
+                </div>
+            );
+            style.backgroundColor = 'red';
+            // This next part is from Radium
+            style[':hover'] = {
+                backgroundColor: 'salmon',
+                color: 'black',
+            };
+        }
+
+        // super cool way to import a pile of style attributes from a CSS sheet. Use className={classes}
+        // const classes = ['red', 'bold'].join(' ');
+
+        // Dynamically asigning classes. You need to use .join(' ') in the className binding.
+        const classes = [];
+        if (this.state.persons.length <= 2) {
+            classes.push('red');
+        }
+        if (this.state.persons.length <= 1) {
+            classes.push('bold');
+        }
+
+        return (
+            <StyleRoot>
+                <div className="App">
+                    <h1 className="App-title">Welcome to Cliff's React Page</h1>
+                    <p className={classes.join(' ')}>Testing some styles</p>
+                    <button
+                        style={style}
+                        onClick={this.togglePersonHandler}
+                    >Toggle People
+                    </button>
+                    {persons}
+                </div>
+            </StyleRoot>
+        );
+    }
+}
+
+//export default Radium(App);
+
+ */
+
+
+
+
+
+/* 
+
+
+More on binding 'this' for methods passed in as props
+-----------------------------------------------
+
+When passing in methods as props make sure you bind correctly. One typescript way is to bind in the constructor:
+
+    constructor() {
+        super();
+        this.changeTitle = this.changeTitle.bind(this);
+    }
+
+Recall that the 'this' object is part of the execution context, so if your component's method is being passed into a child component then that it will be the child's execution context, which could well cause an error. 
+
+Other binding alternatives include binding when the method is passed in
+
+    <button onClick={this.incrementAge.bind(this)}>Age ++</button>
+or
+    //function being returned when arrow function executed at a later time; the context is baked in the arrow func.
+    <button onClick={() => this.incrementAge()}>Age ++</button>  
+    
+Also, When passing in a method (say that it is bound in the constructor and so not using an arrow function), make sure that you don't imediately execute it. Pass it in without round brackets:
+
+    <button onClick={this.incrementAge}>Age ++</button>
+
+And, if the method you are passing in does not refer to 'this', like a method that pops up an alert, then no binding is necessary.
+
+
+
+Example of binding and props for three levels of components:
+
+In the stateful components we have a couple of click handlers that need to be passed down 2 more levels. They both take 'type' as an argument. First we make the methods arrow functions so that we can pass them in to the next level <BuildControls>:
+
+    <BuildControls 
+        ingredientAdded={this.addIngredientHandler}
+        ingredientRemoved={this.removeIngredientHandler}
+        
+Within <BuildControls> we use several <BuildControl> elements. We generate them with an array:
+
+    const controls = [
+        { label: 'Salad', type: 'salad' },
+        { label: 'Bacon', type: 'bacon' },
+        { label: 'Cheese', type: 'cheese' },
+        { label: 'Meat', type: 'meat' } 
+    ];
+
+    const buildControls = (props) => (
+        <div className={classes.BuildControls}>
+            <p>Current Price: <strong>{props.price.toFixed(2)}</strong></p>
+            {controls.map((control) => (<BuildControl 
+                                            key={control.label}
+                                            label={control.label}
+                                            added={() => props.ingredientAdded(control.type)}
+                                            removed={() => props.ingredientRemoved(control.type)}
+                                            disabled={props.disabled[control.type]} />
+            ))}
+            // ...
+
+ Because type originates in the state of the container component, normally we would need to pass it down as a prop alongside our two click handlers. Then in <BuildControl> we would call the click handlers with a type argument. However we don't see that here. Instead we preload the added and removed type with the type. <BuildControl> nw looks like this:
+
+    <button className={classes.Less} onClick={props.removed} disabled={props.disabled}>Less</button>
+    <button className={classes.More} onClick={props.added}>More</button>
+
+
+
+A better way to bind this
+-----------------------------------------------
+
+    constructor() {
+        super();
+        this.changeTitle = this.changeTitle.bind(this);
+    }
+
+    changeTitle(title: string): void {
+        // stuff
+    }
+
+    render() {
+        return (
+            <div>
+                <childComponent changeTitle={this.changeTitle}]/>
+            </div>
+        );
+    }
+}
+
+*/
+
+/* CSS modules
+
+Running npm run eject opens up a lot of 'under the hood' configerations for create-react-app. Besides script files
+you can also access webpack confiferation files. Webpack is a bundler that makes a number of tansformations and 
+optimisations. Part of this process involves taking care of .css files.
+
+In webpack.config.dev.js and webpack.config.prod.js search for the css loader inside module.
+(Under modules look for a regex expression for css. like test: /\.css$/ ) Add this in the options:
+
+                  modules: true,
+                  localIndentName: '[name]__[local]__[hash:base64:5]'
+
+This now scopes a .css file to its local folder (which was our problem with css files before; they had global 
+reach). Webpack now converts css code into a js object with a CSS loader. The reason why the css file becomes
+unique is that unique class names are created. Check out the DOM in the dev tools.
+
+We now need to update our import statement.
+
+    import <something like 'classes' or 'styles'> from './Person.css';
+
+And to use classes in className we replace the string with the new import:
+
+    className = {classes.App} // App.js has several class name selectors, including .App, .red and .bold   
+
+Also, for our dynamic classnames we push object properties instead of strings.
+
+    const assignedClasses = [];
+    if (this.state.persons.length <= 2) {
+        assignedClasses.push(classes.red);  // was .push(['red'])
+    }
+    if (this.state.persons.length <= 1) {
+        assignedClasses.push(classes.bold); // was .push(['bold'])
+    }
+
+    return (
+        <div className={classes.App}>
+            <h1>Welcome to Cliff's React Page</h1>
+            <p className={assignedClasses.join(' ')}>Testing some styles</p> ...
+
+if you somehow also want to define a global (i.e. un-transformed) CSS class in such a .css  file, 
+you can prefix the selector with :global .
+
+    :global .Post { ... } 
+
+Now you can use className="Post"  anywhere in your app and receive that styling.
+
+We can also redo our conditional styling.
+
+In our App.css file we use normal css rules to create nested elements:
+
+    .red {
+    color: red;
+    }
+
+    .App button {   // normal css case; all buttons inside an element that has className={classes.App}
+    border: 1px;
+    padding: 16px;
+    background-color: green;
+    font: inherit;
+    color: red;
+    }
+
+    .App button:hover {
+    background-color: lightgreen;
+    color: black;
+    }
+
+    .App button.red {    // normal css rule to style any button that has the red class
+    background-color: red;
+    }
+
+    .App button.red:hover {
+    background-color: salmon;
+    color: black;
+    }
+
+Then inside render we can can check the state each time the state changes
+
+    render() {
+        let buttonClass = '';
+
+        if (this.state.showPersons) {
+            buttonClass = classes.red;
+        }
+
+    return(
+        // ...
+        <button className={buttonClass}>....
+    )
+
+className always expected a string, and strings are passed under the hood. CSS modules allow you
+to access these strings.
+https://github.com/css-modules/css-modules
+
+
+Another exmaple of dynamically including styles via props. In this example we stack css classes dynamically Button.jsx:
+
+    const button = (props) => (
+        <button
+            className={[classes.Button, classes[props.btnType]].join(' ')}
+            onClick={props.clicked}
+        >{props.children}</button>
+    );
+
+Where the CSS file looks like:
+
+    .Button {
+        background-color: transparent;
+        border: none;
+        color: white;
+        outline: none;
+        cursor: pointer;
+        font: inherit;
+        padding: 10px;
+        margin: 10px;
+        font-weight: bold;
+    }
+
+    .Button:first-of-type {
+        margin-left: 0;
+        padding-left: 0;
+    }
+
+    .Success {
+        color: #5C9210;
+    }
+
+    .Danger {
+        color: #944317;
+    }
+
+
+And, another way to to conditionally apply a CSS class with the use of props:
+
+    className={props.active ? classes.active : null}
+
+
+*/
+
+/*  Debugging and Errors Handling (Error Boundaries)
+
+Logical errors are difficult to spot. There may be no console messages. You need to go through
+the code step by step. Go to the sources tab in the dev tools. Your code structure will exist
+under localhost. This is possible due to source maps. These are basically traslated files. 
+The dev tools has access to your code they way you wrote it rather than the way it is actually
+bundled and used by the browser. Set breaks points by clicking in the margin and use the normal
+step in and step out buttons. As you move throught the code move your cursor over variables 
+and see if they hold expected values. A common give-a-way is that a variable is undefined.
+
+You can also install the React Developer Tools. In the React Tab you don't just see the DOM, but 
+instead you see your components. When you click on a component you can see it's state and props
+with their current values. You can also change the state there.
+
+Custom error messages: error boundaries 
+
+Say you have some code that may generate errors that concern the user. For example a requested
+online resource is not available We can simulate this with a random number:
+
+        const randomNum =  Math.random();
+
+        if(rnd > 0.7) {
+            throw new Error('something went wrong');
+        }
+
+If such an error occurs we would like to catch it and handle it graciously (rather than seize 
+up the app and throw out warnings). We need a new component called an error boundary. This is a
+higher order component that you wrap around around other component. Eg say the child component
+has a possible error we would like to catch. You can replace the component with a replacement
+method should an error occur.
+
+    return(
+        <ErrorBoundary key={this.state.id}><Child /></ErrorBoundary>
+    )
+
+Note, if a key is normally being supplied to the child then it will have to be transered to the
+error boundary
+
+You will still an error smashing you page in dev builds, but in the final production build it will look
+a lot better.
+
+Don't use error boundaries often. They are only for the odd case that you cannot control.
+
+
+import React, { Component } from 'react';
+
+class ErrorBoundary extends Component {
+    state = {
+        hasError: false,
+        errorMessage: ''
+    }
+
+    coponentDidCatch = (error, info) => {
+        this.setState({ hasError: true, errorMessage: error });
+    }
+
+    render() {
+        if (this.state.hasError) {
+            return <h1>{this.state.errorMessage}</h1>
+        } else {
+            return this.state.children;
+        }
+    }
+}
+
+export default ErrorBoundary;
+*/
+/* Organising Components
+
+Typically stateful components should be left to manage state rather than render a lot of UI.
+It can be a good idea to look at the render method of these components and pull out UI
+elements into self contained stateless components. The stateful components should not have
+a lot of JSX; ie their render methods should look very lean.
+
+Also, consider a folder structure in which child component folders are placed inside
+their parents folders (rather than having all components at the top level of the src
+folder).
+
+It might also make sense to make a components folder at the top of the source folder. 
+Along side this folder then you can make an assets folder to store things like images. And
+then we can have containers folder for state containing components like App.js
+
+src
+    assets
+    components
+        Cockpit
+            cockpit.css
+            cockpit.js
+        Persons
+            Persons.jsx
+            Person
+                Person.jsx
+                Person.css
+    containers
+        App.jsx
+        App.css
+        App.test.js
+    hoc
+        
+'hoc' stands for 'Higher Order Components'
+
+
+We also see that a person is used in Persons, so Person is a sub component in this structure. In the code
+we now have a cases where state is passed into props, which is then passed into props for a sub-component.
+So something like a click handler is just passed into a sub component as onclick={props.clickHandler}.
+
+With such a lean structure we have even more functional componants. Each focuses on drawing some UI, with perhaps some logic to help with conditional styling. Each has a clear scope and overall we have a very granular approach. State management is left to a small group of stateful components. This makes it easier to manage the application as it grows.
+
+*/
+
+/*  Component Lifecycle Hooks
+
+When React creates a component for us, the component goes through several phases. We can define methods that will run only during these phases. However, this is only available in class based components (where we extend component class - but not necessarily a stateful component).
+
+Examples include render(), componentDidMount(), componentDidUpdate(), and componentWillUpdate().
+
+During creation the following methods aka Lifecyle hooks are executed, in this order:
+- constructor(props)  // A default ES6 feature (not specific to React). It instantiates the object and passes props
+                       // If you use it, remember super(props), set up the state (but you can just do this in the class body),
+                       // but don't cause side effects. eg reaching out
+                       // to a server to change the state in the constructor. Do this else where because the state could be 
+                       // unpredictable, and it could result in an expensive re-render of the entire component.
+- componentWillMount()  // Mainly around for historic reasons. If you do use it, use it for state update and last minute
+                        // optimisation. Again, don't cause side effects.
+- render()              // Does not update the actual DOM - this will be covered later. For now, know that this gives React
+                        // an idea of how the real DOM should look before it reaches out to the real DOM. Use this to prepare and
+                        // structure your JSX code. rener() is mandatory for containers.
+    
+        //Now this component and child components will be rendered. Updating the state in the parent often means that children
+        // recieve new props, and thus will also have their own lifecycle process complete. And, children process
+        // happen before the parent is mounted. (Recall that components update when state or props change)
+
+- componentDidMount() //  After each such rendering this method is called,
+                        // which tells us that the component was successfully mounted. Now is the time to cause side-effects, like
+                        // reaching out to the web for data. However, don't update the state yet (this.setState(). 
+                        // That would cause a re-render. This method will be called on children before it is called on the parent.
+
+
+
+
+Removal of component
+
+- componentWillUnmount()                        // just before a component is removed from the DOM
+
+
+
+
+
+Updating a component - when triggered by a parent
+
+
+
+- componentWillRecieveProps(nextProps) // this method is usually only used when you want to sync the initial state with the props. As usual
+                                        // don't cause side effects.
+
+- shouldComponentUpdate(nextProps, nextState)  // This may cancel the updating process. If you return true the updating continues and if
+                                            // you return false the updating process stops. Don't cause side effects but decide whether or not
+                                            // to continue with the update.  This method can make preformance gains if used carefully. That is
+                                            // you check the upcoming props and state and see that an update is not required. (this is also
+                                            // why we update the state immutably in our handlers - different values are displayed)
+
+- componentWillUpdate(nextProps, nextState) // If you returned true in the last method, then you can use this method to sync state to props
+                                            // but don't cause side effects. This is probably a better place for a sync because you
+                                            // know that you will be updating.
+
+- render() --> update child components props --> componentDidUpdate() 
+
+                                        // now you can cause side effects, just like componentDidMount()
+
+
+
+                                        Lifecycle when Update triggered by internal change (setState)
+
+
+shouldComponentUpdate(nextProps, nextState) --> componentWillUpdate() --> render() --> Updatechild components --> componentDidUpdate()
+
+
+    class App extends Component {
+
+	constructor(props) {
+		super(props);
+		// can optionally initialise the state here
+		// this.state = ...
+	}
+
+	componentWillMount() {
+        // .....
+	}
+
+	componentDidMount() {
+        // .....
+	}                         
+
+    shouldCompontUpdate(nextProps, nextState) {
+        // will only allow an update if there is a change. Efficient if there are many components of the same type
+        return nextProps.persons !== this.props.persons || nextState.showPersona !== this.state.showPersons // only a shallow check so break it up
+        
+    }
+
+
+There is an alternative way of doing what shouldComponentUpdate does. Import PureComponent instead of Component.
+
+
+    import react, { PureComponent } from 'react';
+
+    class App extends PureComponent { //... this is the same as a normal component except shouldComponentUpdate is built in.
+
+
+Don't make all components pure. If they are higher up the component tree they may stop other components from updating. In fact you may have many interactive elements, like buttons, from which we do expecte to see a UI update. There really isn't much benefit in looking for performance improvements via checking to see if a component should update.
+In our burger project only one element stands out as a candidate. It is a modal that wraps the order summary. The order summary is tied into the state, and updates a lot, but the modal is not visible when the order is being changed by the user. 
+
+First we can experiemnt by converting OrderSummary to a class based componet and inserting some logging to see when it updates:
+
+    componentWillUpdate() {
+        console.log('[OrderSummary] WillUpdate');
+    }
+
+And we do see that eventough the modal is not visible, every time we change the order the logging appears. So we now convert the modal to a class component and give two hooks. The first checks to see if there is a change in the state that indicates the modal should be shown, and returns true. The second is some temporary scoffolding.
+
+    shouldComponentUpdate(nextProps, nextState) {
+        return nextProps.show !== this.props.show;
+    }
+
+    componentWillUpdate() {
+        console.log('[Modal] WillUpdate');
+    }
+
+
+
+
+How does React update the DOM?
+
+There is a big difference between render() being called and the DOM actually being updated. render() is more pf a suggestion of what the HTML should look like. This method actually compares an old virtual DOM and a re-rendered virtual DOM. The virtual DOM is a DOM representation in JavScript that is a lot faster than the real DOM. Also acessing the DOM is very slow.
+
+So render actually creates a new virtual DOM to be compared with the old virtual DOM. It then checks for any differences. If there are differences then it reaches out to the DOM and updates it.  But, it does not update the entire DOM. Just those parts that are changing.
+
+react 16.3 updates:
+
+The use of componentWillMount() and componentWillUpdate() and componentWillRecieveProps() is now discouraged. They were often used incorrectly, such as calling setState(). 
+
+However, there are 2 new hooks. 
+
+static getDervivedStateFromProps(nextProps, previousState) {
+    // executed whenever props are updated.
+    // Gives you the chance to update state along with these prop changes.
+    
+    // return a new state object; returning prevState does nothing
+    return prevState 
+}
+
+Often you don't want this. Your state should not normally be coupled to the props. But sometimes you do, such as getting new props that you want to work with in state before a user does another action.
+
+This is a static method (a method not attached to a single instance).
+
+It is called before render().
+
+The other new hook is getSnapshotBeforeUpdate()
+
+This allows you to get a snapshot of the DOM before it is about to change. It excutes just before the DOM updates.
+
+A usage example would be saving the current mouse position of a user and then reapplying it againg in componentDidUpdate()
+
+*/
+
+
+/*  Returning Adjancent Elements - React 16 
+
+The normal return from render rule is that we need to return multiple elements in a  wrapping div. However we already know one exception. We can use the map method to return an array of identical elements. We can extend this exception. As long as each element has a key, we can return a literal array of a mixture of elements. 
+
+
+render() {
+    return [
+        <p key= //..
+        <p key= //..
+        <input key= //..
+    ]
+}
+
+
+Another option is to wrap a goup of elements with a higher order component. These components usually provide some kind of functionality.
+
+Here is a simple example in which only child compnents are returned.
+
+    const aux = (props) => props.children;
+    export default aux;
+
+This may look useless, but it is actually very useful. 
+
+In Cockpit.js we had this multiple element render method. The wrapping div did contain some styling but we find that this styling can be easily moved to the sub-componets (that to Cockpit.js referencing it's own css file there is not much of a scoping problem; the button styling can go straight to the button inside the cockpit). So now the wraping div is only there to wrap.
+
+    return (
+        <div>                                       // was <div className={classes.Cockpit}>
+            <h1>{props.appTitle}</h1>
+            <p className={assignedClasses.join(' ')}>Testing some styles</p>
+            <button
+                className={buttonClass}
+                onClick={props.togglePersonHandler}
+            >Toggle People
+            </button>
+        </div>
+    );
+
+So now we can wrap everything up with our custom component:
+
+    return (
+        <Aux>
+            <h1>{props.appTitle}</h1>
+            <p className={assignedClasses.join(' ')}>Testing some styles</p>
+            <button
+                className={buttonClass}
+                onClick={props.togglePersonHandler}
+            >Toggle People
+            </button>
+        </Aux>
+    );
+
+This is helpful because we can now avoid using unwanted divs, which is often the case when the div add nothing (particulary if we can move the styling into sub components).
+
+*/
+
+/*
+
+Higher Order Components
+
+In the previous section we introduced a simple HOCs. You might also use one of these to introduce some logic into all of it's wrapped children. An example might be sharing a logged in user.
+
+Here we supply a CSS class through a HOC
+
+    const WithClass = (props) => (
+        <div className={props.classes}>
+            {props.children}
+        </div>
+    );
+
+The next example component is not actually a component. It is a normal JS function that takes some configuration, like a class name. It returns an actual React component that recieves the props and renders something. We use regular camel case for this kind of "component"
+
+    const withClass = (WrappedComponent, className) => {
+        return (props) => (
+            <div className={className}>
+                <WrappedComponent {...props}/>
+            </div>
+
+        )
+    }
+
+Now we can go back to the wrapped component, reuse our simple Aux, and update the export.
+
+    class Person extends Component {
+
+        render() {
+            return (
+                <Aux>
+                    <p onClick={this.props.click}>I am a person. My name is {this.props.name} and my age is {this.props.age}</p>
+                    <p>{this.props.children}</p>
+                    <input type="text" onChange={this.props.changed} value={this.props.name} />
+                </Aux>
+            );
+        }
+    }
+
+    export default withClass(Person, classes.App);
+
+(note, as of React 16.2 it is possible to just use empty tags <> instead of a component like Aux). The HOC can also return higher order components. However, never use it to manipulate the state or properties of <WrappedComponent>.
+
+One implementaiton issue is that we are wrapping various components, and each component requires different props. {...props} fixes this.
+
+
+Here is the same HOC, but returning a stateful component:
+
+    const withClass = (WrappedComponent, className) => {
+        return class extends Component {
+
+            render() {
+                return (
+                    <div className={className}>
+                        <WrappedComponent {...this.props} />
+                    </div>
+                )
+            }
+        }
+    }
+
+*/
+
+/*
+
+The async nature of setState()
+
+The setState method is executed asynchronously. This means that various components could be calling it in an unkown order. If you call this.state from within setState you can't be sure the state of the state. Consider this counter snippit:
+
+    this.setState({
+        count: this.state.count + 1
+    })
+
+Supplying setState with a function gives a better syntax:
+
+    this.setState( (previousState, props) => {
+        return {
+            count: previousState.count + 1
+        }
+    })
+
+So now previousState can't be mutated anywhere else in the app. This si the clean way of setting the state when it depends on the old state.
+
+
+setState can act also strangly when it's called by one method, which then goes on to call another method that in turn calls setState:
+
+    this.setState({
+        totalPrice: newPrice,
+        ingredients: upDatedIngredients})
+    this.updatePurchaseState();  // this method also calls setState -  in this configuration updatePurchaseState is still working with the old state.
+
+So instead of both methods accessing the state directionly, we only access setState in the first method. The first method can then pass in the future state, as it passed into setState, into the second method as an argument:
+
+
+    addIngredientHandler = (type) => {
+        const oldCount =  this.state.ingredients[type];
+        const updatedCount = oldCount + 1;
+        const upDatedIngredients = {
+            ...this.state.ingredients
+        };
+        upDatedIngredients[type] = updatedCount;
+
+        const priceAdditon = INGREDIENT_PRICES[type];
+        const oldPrice = this.state.totalPrice;
+        const newPrice = oldPrice + priceAdditon;
+        
+        this.setState({
+            totalPrice: newPrice,
+            ingredients: upDatedIngredients
+        })
+        //this.updatePurchaseState();
+        this.updatePurchaseState(upDatedIngredients);  // here updated ingredients was the state property used by updatePurchaseState. Now it's just an argument.
+    }
+
+
+    updatePurchaseState(ingredients) {    // this method now has a parameter that is used instead of a copy of the state. It was just updatePurchaseState() before.
+    // updatePurchaseState()
+        // const ingredients = {
+        //     ...this.state.ingredients
+        // }
+        const sum = Object.keys(ingredients)
+            .map(igKey => {
+                return ingredients[igKey];
+            })
+            .reduce((sum, el) => {
+                return sum + el;
+            }, 0);
+
+        this.setState({
+            purchasable: sum > 0
+        })
+    }
+*/
+
+
+/*
+Validating Props
+
+We can check the types of incoming properties so that we can ensure they are being used correctly.
+
+npm install --save prop-types
+
+then import:
+
+    import PropTypes from 'prop-types';
+
+
+Now go below your class definition and add a new object property to your component.
+
+In Person we now that click is a function and name is a string. We can get these typing from the imported PropTypes object.
+
+    Person.propTypes = {
+        click: PropTypes.func,
+        name: PropTypes.string,
+        age: PropTypes.number,
+        changed: PropTypes.func
+    };
+
+A full list of available types: https://reactjs.org/docs/typechecking-with-proptypes.html
+*/
+
+/*
+Using References ("ref")
+
+Refs provide a way to access DOM nodes or React elements created in the render method. It is only available in stateful components. In the typical React dataflow, props are the only way that parent components interact with their children. To modify a child, you re-render it with new props. However, there are a few cases where you need to imperatively modify a child outside of the typical dataflow.
+
+There are a few good use cases for refs:
+
+    Managing focus, text selection, or media playback.
+    Triggering imperative animations.
+    Integrating with third-party DOM libraries.
+
+Avoid using refs for anything that can be done declaratively. For example, instead of exposing open() and close() methods on a Dialog component, pass an isOpen prop to it.
+
+Similar to props, elements also have a ref attribute. A ref is a dynamic input that should be a function. In the function you set a refernce to the element.
+
+Let's say we want focus to always be on the input field on the first Persons element.
+
+    class Person extends Component {
+
+        render() {
+            return (
+                <Aux>
+                    <p onClick={this.props.click}>I am a person. My name is {this.props.name} and my age is {this.props.age}</p>
+                    <p>{this.props.children}</p>
+                    <input 
+                        ref={(input) => {this.inputElement = input}}  
+                        type="text" 
+                        onChange={this.props.changed} 
+                        value={this.props.name} />
+                </Aux>
+            );
+        }
+    }
+
+So this.inputElement is a new property of the class that any component built from the class can access. It is created when render is run. So, for example, we can access it in componentDidMount(), but not some preceeding lifecycle hook. 
+
+Beause we have assigned this input element to this.inputElement we can now access this particular input element.
+
+So now we can call the built in focus method:
+
+	componentDidMount() {
+		if(this.props.position === 0){
+			this.inputElement.focus();
+		}
+	}
+
+Where position is passed in as a prop from Persons
+
+    positon={index}  // this is index from the array map() method used to make a list
+
+Use these with care. This is not a short cut for features like dynamic styling. Just use it for things like controlling focus and media playback.
+
+
+From React 16.3 there is another way to create references with the createRef() method. Using this method you create the reference in the constrcutor. A callback is no longer needed if the ref passed in, and any use now requires accessing the 'current' property on the reference.
+
+
+	constructor(props) {
+		super(props);
+		this.inputElement = React.createRef();
+	}
+
+	componentDidMount() {
+		if (this.props.position === 0) {
+			this.inputElement.current.focus();
+		}
+    }
+    
+    render() {
+		return (
+			<Aux>
+				// ...
+				<input
+					ref={this.inputElement}
+                //...
+
+React 16.3 also offers support for forwarded references. The means passing a reference from outside a component and through that component. This particularly useful for passing a reference through a wrapper or HOC.
+
+In our project we can have access to reference from <Persons> within a child <Person> despite <Person> being wrapped in an intermediary HOC. Say, we want to assign the last <Person> (in the map method) to this reference to supply it with focus. 
+
+
+Inside the constructor for <Persons> we again use createRef().
+
+    this.lastPersonRef = React.createRef();
+
+And <Persons> render we supply the ref prop:
+
+    ref={this.lastPersonRef}
+
+And this:
+        componentDidMount() {
+        this.lastPersonRef.current.focus();
+    }
+
+(Since it's a map, we loop through all <Person> elements only the last will the reference)
+
+Now in <Person> we supply a focus method
+
+
+	focus() {
+		this.inputElement.current.focus();
+	}
+
+At this stage we get an error. focus is not a method in Persons.componentDidMount(). the problem is a withClass HOC (if you take it out eveything works). ref is a special property that is not automatically forwarded with other props. 
+
+So in the HOC we forward the reference. First thogh, go back to <Person> and change from the standard special ref to something else:
+
+    forwardRef={this.lastPersonRef}
+
+And in the HOC we pass in the special ref:
+
+    render() {
+        return (
+            <div className={className}>
+                <WrappedComponent ref={this.props.forwardRef} {...this.props} />
+            </div>
+        )
+    }
+
+While this works, it would be nicer to just pass in ref at <Person>. To do this we need to convert the withClass HOC to a const and use the new forwardRef React method, which takes both props and a ref argument.
+
+    const withClass = (WrappedComponent, className) => {
+        const WithClass = class extends Component {
+            render() {
+                return (
+                    <div className={className}>
+                        <WrappedComponent ref={this.props.forwardRef} {...this.props} />
+                    </div>
+                )
+            }
+        }
+
+        return React.forwardRef((props, ref) => {
+            return <WithClass {...props} forwardedRef={ref} />
+        });
+    }
+
+    export default withClass;
+
+So <withClass> now takes care of everything.
+
+
+*/
+
+/*
+Context API
+
+This tool allows you to pass global state around your app. 
+
+Let's say we have a log-in button in the cockpit that sets some global state to true. When it's clicked it will change other components.
+
+So we set up a new handler in <App>, the parent of <Cockpit>, and also pass it into <Clockpit>.
+
+	loginHandler = () => {
+		this.setState({ authenticated: true })
+    }
+    
+    return (
+			<Aux>
+				<Cockpit
+                    login={this.loginHandler}
+                    // ...
+
+
+If we now also wanted to change something in <Person> we could pass in the state as a prop via <Persons>.
+
+    isAuthenticated={this.state.authenticated}
+
+And then in turn send this to <Person>
+
+    authenticated={this.props.isAuthenticated}
+
+Now in <Person> we can use it.
+
+	render() {
+		return (
+			<Aux>
+                {this.props.authenticated ? <p>I'm authenticated</p> : null}
+                // ...
+
+
+While passing down these values is an option, you can use the context API to make this easier for global values. Another example might be a global theme color set up by the user.
+
+In App.js first create an exportable context (after the imports and before the class definition - it's not in the class).
+
+export const AuthContext = React.createContext(false);  // optional default value: false
+
+Now we can use this context in our JSX code, which will have providers and consumers. Some parts of the app provide the context and other parts consume it.
+
+In App.js we manage the authentication status so it is the provider. So here we wrap all components in which we want to extract that value from the context in a special component. The name of the component is the name of the context.
+
+	<AuthContext.Provider value={this.state.authenticated}>{persons}</AuthContext.Provider>
+
+Where '.Provider' is a subcomponent created by React, and the 'value' property allows us to dynamcially change the value. Now, no matter their level, all child components can access the value.
+
+(You can now take out the props in <App> and <Persons> we introduced above)
+
+Import AuthContext into <Person>, the place we want to use the context value, and make a new consumer component. Here the context value is an argument in a function.
+
+    <AuthContext.Consumer>
+        {auth => auth ? <p>I'm authenticated</p> : null}
+    </AuthContext.Consumer>
+
+Overall, the props approach is best for make cases. It make them more re-usable and less complex.
+*/
+
+/*
+Planning a React Application
+
+ - After recieving a design, split it up into components and form a component tree.
+ - Decide on the state. What data do you need?
+ - Decide which components are state containers.
+
+For out burger app we might have something like:
+
+App
+    Layout
+        Toolbar (for desktop)
+            Drawer toggle
+            Log
+            Navigation Items
+        Sidebar (for phone)
+            Log
+            Navigation Items
+        Backdrop
+        {props.children} (holds various pages)
+            Burger Builder (first page)
+                Build Controls
+                Burger
+                Modal
+
+Our state would include ingredients in some object, total price, and whether the burger has been purchased. Since this state relates to just building the burger, we would probably store the state in the Burger Builder component.
+
+*/
+
+/*
+Disabling a Feature
+
+Say you have a button that you want conditionally disable. If you have a style sheet it could look like this:
+
+    <button className={classes.Less} onClick={props.removed} disabled={props.disabled}>Less</button>
+
+Where the CSS selector is this:
+
+    .BuildControl button:disabled {
+        background-color: #AC9980;
+        border: 1px solid #7E7365;
+        color: #ccc;
+        cursor: default;
+    }
+
+
+    - passing down the add/remove ingredients method references (and not explicitly passing in type)
+
+          
+
+Using Images
+
+Once the app is built the src folder, as well as the relative path to all assets, may not be where you think. We can't just use the standard src property in an <img>:
+
+    <img src="../../assets/images/burger-logo.png" alt=""/>
+
+Instead import the image. This makes webpack aware that we are using the image and then it will handle it with a special package that will optimise and move the image, and then dynamically link the image back:
+
+    import React from 'react';
+    import burgerLogo from '../../assets/images/burger-logo.png';
+
+
+    const logo = (props) => (
+        <div>
+            <img src={burgerLogo} alt=""/>
+        </div>
+    );
+
+    export default logo;
+
+
+We want to make things like logo images reusuable. This means not messing with their style sheets. Instead, we make adjustments at the embedded location. First pass in the new style as a prop and then modify the component to take inline styles.
+
+    <Logo height="80%"/>
+
+    const logo = (props) => (
+        <div className={classes.Logo} style={{height: props.height}}>
+        // ...
+
+An alternative solution is to wrap the element in a div and then include the element in the parents CSS file. This overrides the elements CSS.
+
+    <div className={classes.Logo}>
+        <Logo />    
+    </div>
+
+In Parent CSS:
+    
+    .Logo {
+        height: 11%;
+    }
+
+We can get away without any naming issues because we each CSS sheet is treated as a separate module by webpack.
+
+*/
+/*
+
+Link to the home page
+
+When going back to the home page from a link use the forward slash, which indicates the root page:
+
+            <a href="/"
+
+
+*/
+
+/*
+
+
+*/
+
+/*   
+
+*/
