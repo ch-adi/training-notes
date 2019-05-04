@@ -3698,7 +3698,9 @@ Primer example:
     var myVar = 1;
     a(); // 1 (i.e. not undefined and not 2)  // the same also occurs if we use 'let'
 
-Recall that part of an execution context is a reference to the outside environment (another execution context). If you ask for a variable that has not been declared in the local execution context then the JS engine looks within the outer reference context. 
+Recall that part of an execution context has a reference to the outside environment (another execution context). If you ask for a variable that has not been declared in the local execution context then the JS engine looks within the outer reference context.
+
+Also, understand the concept of a lexical environment: a lexical environment exists in languages in which WHERE you write is important (for the compiler). When we talk about the lexical context for a piece of code, we mean where it has been written and what is around it. For example, you might say the contents of a function sit lexically within that function. Also, the relative position of code pieces such as variables can give you an idea of where information sits in memory.  
 
 Here the b() execution context has a reference to the global execution context. The JS engine is bypassing the a() execution context in it's search for myVar's value. While the b() execution context does sit on top of the a() execution context, we say 'lexically' that the b() execution context actually sits on top of the global execution context. The b() 'lexical environment' sits next to the a() lexical environment. That is, both functions are declared at the same level in the same file. While b() is called inside a(), b() is not declared inside a().
 
@@ -3712,7 +3714,6 @@ Here we change the lexial environment for b() and see that myVar comes from a():
     b(); // uncaught ReferenceError: b is not defined.
 
 Again, three execution contexts were created, but b()'s outer reference changed. The scope chain has an extra step. b()'s context is not created until a()'s context is created. Since b's context was created inside a's context, b's outer reference is to a's execution context.
-
 
 The main type of scope in Javascript is Lexical Scoping. Present in the language from the very beginning, this is the scope created within a function, and the one most developers are familiar with (traditionally functions were the only thing that could create a new scope). ES6 recently defined Block Scoping. This scope is created within curly braced blocks.
 
