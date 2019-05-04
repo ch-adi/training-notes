@@ -1,0 +1,36 @@
+class Thing {
+   @observable
+   state: number;
+
+   @computed
+   get multiplied() {
+      return this.state * this.otherState;
+   }
+
+   @action
+   doThing() {
+       this.state = 0;
+        
+       await blah();
+       
+       this.otherState = 1;
+   }
+
+}
+
+Any instance of a Thing will have a member/property called 'state'. If state changes there may be a redraw.
+If there is an observable inside a method decorated with @computed, as there is here with multiplied(), then if multiplied() is called within a render method a redraw will occur. 
+doThing() also causes a redraw. Everything inside is normally batched up so that the system does not get to complicated. However be careful when using an await. If you do use like above , eveything up to inlcuding the await is batched up but then every thing else is actioned independantly. This is caused by an internal function, runInAction(), only including up to the await. It looks like this:
+
+   @action
+   doThing() {
+      runInAction(() => {
+         // modify observable
+         this.state = 0;
+         
+         await blah();
+      });
+
+      this.otherState = 1;
+   }
+

@@ -1684,6 +1684,59 @@ Note that bind() really means makeCopyBoundTo().
     var x = new myFunction("John","Doe");
     x.firstName;                             // Will return "John"
 
+
+A function constructor is a normal function that is used to create objects.  If you use the new keyword the 'this' variable points to a new empty object, and that object is returned from the function automatically. 
+
+Because 'this' has been automaticaly created then we can attach things to it inside the function before it is returned:
+
+    function Person (firstName, lastName) {
+        this.lastName = lastName;
+        this.firstName = firstName;
+    }
+
+    var john = new Person('John', 'Doe');
+
+It's also possible to add to this object's prototype (see 'prototype chain' - in js inheritance is from other objects, not a class):
+
+    Person.prototype.greet = function() {
+        // use 'this' so that we refer to the object and not some variable (so don't use an arrow function here)
+        console.log('hello ' + this.firstName + ' ' + this.lastName);
+    }
+
+The naming here is a little confusing. This prototype is the prototype of any object created from the Person function. It is not the prototype of the constructor function. So all objects created from this function constructor can have access to this greet method.
+
+The js engine will now search down the prototype chain for this method:
+
+    john.greet();
+
+
+If you ever want to see the prototype for an object use __proto__ :
+
+    // not recommended for produciton code
+    console.log(john.__proto__);  // { greet: [function] } 
+
+The es6 version of a function constructor is syntactic sugar. Classes in JS are not the same as they are in other languages.
+    
+    'use strict';
+
+    class Person {
+        
+        // on each object
+        constructor (firstName, lastName) {
+            this.lastName = lastName;
+            this.firstName = firstName;
+        }
+
+        // on the prototype that each object shares
+        greet() {
+            console.log('hello ' + this.firstName + ' ' + this.lastName);
+        }
+    }
+
+    // object created the same way
+    var john = new Person('John', 'Doe');
+
+
 A constructor invocation creates a new object. The new object inherits the properties and methods from its constructor. So, the this keyword in the constructor does not have a value. The value of this will be the new object created when the function is invoked.
     
 So, in summary, when some function contains a reference to 'this', four possibilities exist. The first is a default binding to the global object for a regular function call. The second is using apply() to set 'this' to a particular object. The third invloves using the dot notation; 'this' refers to whatever becomes before the dot. And fourth, the new keyword
@@ -2490,7 +2543,7 @@ We could have written the switch statement more concisely:
 
 Objects are Reference Data Types:
 
-One of the main differences between reference data types and primitive data types is reference data type’s value is stored as a reference, it is not stored directly on the variable, as a value, as the primitive data types are. For example:
+One of the main differences between reference data types and primitive data types is reference data type’s value is stored as a reference, it is not stored directly on the variable, as a value, as the primitive data types are. (Primitive Value: any value that is not an object. These are passed by value into functions. )For example:
 
     var person = "Kobe";  
     var anotherPerson = person; // anotherPerson = the ***value*** of person
