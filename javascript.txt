@@ -5,107 +5,6 @@
 **********************************************************************************	
 
 
-Introduction
------------------------------
-
-JavaScript is one of the 3 languages all web developers must learn:
-
-   1. HTML to define the content of web pages
-
-   2. CSS to specify the layout of web pages
-
-   3. JavaScript to program the behavior of web pages
-
-JavaScript can change HTML attributes and content, change CSS styles, and validate input data.
-
-
-Where to place JavaScript
------------------------------
-
-JavaScript can be placed in the <body> and the <head> sections of an HTML page. It is inserted between <script> and </script> tags. A JavaScript function is a block of JavaScript code, that can be executed when "asked" for. For example, a function can be executed when an event occurs, like when the user clicks a button.
-
-Scripts can also be placed in external files using the file extension .js. External scripts are practical when the same code is used in many different web pages. To use an external script, put the name of the script file in the src (source) attribute of the <script> tag:
-
-    <!DOCTYPE html>
-    <html>
-        <body>
-            <script src="myScript.js"></script>
-        </body>
-    </html>
-
-Such files make code easier to maintain, separate JS and HTML, and increase speed.
-
-In fact, for debugging a js file in a browser all you need in an html file is:
-
-    <html>
-        <script src="fileName.js"></script>
-    </html>
-
-And then paste the file location of this html file in your browser. eg file:///C:/Users/chamilton/Desktop/fileName.html 
-
-
-
-Output
-----------------------------
-
-JavaScript does NOT have any built-in print or display functions. However it is possible to:
-
-1. create a pop up window with: window.alert(). In this simple example an '11' is displayed in pop up window:
-
-    <!DOCTYPE html>
-    <html>
-        <body>
-            <script>
-                window.alert(5 + 6);
-            </script>
-        </body>
-    </html>
-
-
-2. We can insert text into a webpage with document.write(): <script> document.write(5 + 6); </script>
-
-Using document.write() after an HTML document is fully loaded, will delete all existing HTML and replace it with the desired text:
-
-    <body>
-        <h1>My First Web Page</h1>
-        <p>My first paragraph.</p>
-        <button type="button" onclick="document.write(5 + 6)">Try it</button>
-    </body>
-
-The document.write() method should be used only for testing.
-
-
-3. To access an HTML element, JavaScript can use the document.getElementById(id) method:
-
-    <body>
-        <p id="demo"></p>
-        <script>
-            document.getElementById("demo").innerHTML = 5 + 6;
-        </script>
-    </body>
-
-4. In your browser, you can use the console.log() method to display data. Activate the browser console with F12, and select "Console" in the menu: 
-<script> console.log(5 + 6); </script>  //just put console.log(5 + 6); in the console rather than running it from within a script.
-
-5. When representing an object in the console or in the page it must first be placed into a string. There are several ways to do this.
-    - JSON.stringify(myObject, undefined, "  ")  (see the JSON section)
-    - console.log("here is my object: ", myObject );
-
-In this second case you get a nice drop down in the console.
-
-
-
-
-Debugging
-------------------------------
-
-In the dev tools go to Sources and select the JS file of interest. Click on any line you would like to stop at. Once you run the code (refresh will do) you will then pause at the line break. Note that not all of the line may be executed at once. The executed section is darker. "Step over" will let the current function run and complete. "Step Into" will go inside the working of the function.
-
-You can also select debugging points by using the keyword 'debugger' in your source code.
-
-Changes in memory are also available by going to Profiles and taking snapshots of the heap. Note that you can't do this when the debugger is working.
-
-
 Syntax and Operators
 ------------------------------
 
@@ -400,7 +299,7 @@ The comma operator evaluates both expressions and returns the result of the seco
 
 typeof Operator: 
 
-The typeof operator is a unary operator that is placed before its single operand, which can be of any type. Its value is a string indicating the data type of the operand.
+The typeof operator is a unary operator that is placed before its single operand, which can be of any type. Its value is a string indicating the data type of the operand. (Recall JS has types for values not variables).
 
 The typeof operator evaluates to "number", "string", or "boolean" if its operand is a number, string, or boolean value and returns true or false based on the evaluation.
 
@@ -425,14 +324,14 @@ Another bug is typeof for an array returning an object. As noted above you can u
 
     Object.prototype.toString.call([1, 2, 3]);  // [Object Array]
 
-Also, note what is happening if var a = undefined. We're explicitly setting 'a' to the undefined value, but that is behaviorally no different from a variable that has no value set yet, like with the var a; . A variable can get to this "undefined" value state in several different ways, including functions that return no values and usage of the void operator.
+Also, note what is happening if var a = undefined. We're explicitly setting 'a' to the undefined value, but that is behaviorally no different from a variable that has no value set yet, like with the var a; . A variable can get to this "undefined" value state in several different ways, including functions that return no values and usage of the void operator. The `undefined` value does not mean that a variable is not existing, or has never been declared. If that was the case you'd get a (confusing) warning that the variable is "not defined". Instead the special undefined value is stored at the memory location that the variable points to when the variable is declared. The stored value only changes if some other value is assigned ('=') to the variable.
 
 
 
 
 Null and Undefined:
 
-In JavaScript, undefined means a variable has been declared but has not yet been assigned a value, such as:
+See the previous paragraph. In JavaScript, undefined means a variable has been declared but has not yet been assigned a value, such as:
 
  var TestVar;
  alert(TestVar); //shows undefined
@@ -1038,8 +937,11 @@ Arguments can also be passed into the IIFE function:
 
 (function (a, b) {return a * b})(2,2);  // 4
 
+As an aside we need to know about the global execution context. Here 'globalg roughly means 'not inside a function'. This special context is something created by the JS engine that wraps all your code, and it is created with a global object and a special variable called 'this'. Even if you have an emtpy file with no code these two entities will exist. Also, in the global context, 'this' refers to the global object, which is called 'window' in a browser. Any, any variables or functions that you create outside of any function are attached to this global object as properties of that object.
 
-IIFEs help create safe code. When the global execution context is beign created an IIFE just becomes an object with some code inside.It goes inside the variable environment for this context. The JS engine then sees the invoking (). It creates a new, annonymous execution context. The variables inside the IIFE then go inside the variable environment in this new execution context. Because the function was anonymous naming conflicts are avoided. For example, this is safe despite being in the same file:
+Execution contexts are also created with a link to an outer environment. For the global execution context this will be null.
+
+IIFEs help create safe code. When the global execution context is being created an IIFE just becomes an object with some code inside. It goes inside the variable environment for this context. The JS engine then sees the invoking (). It creates a new, annonymous execution context. The variables inside the IIFE then go inside the variable environment in this new execution context. Because the function was anonymous naming conflicts are avoided. For example, this is safe despite being in the same file:
 
     var greeting = 'hello';
 
@@ -2223,7 +2125,9 @@ Using functions as namespaces: functions are the only things in JavaScript that 
 Objects
 ----------------------------
 
-"Objects are really just containers for an unordered list of properties, each of which has a name [aka key] and a value." The object contains memory references to these properties. Functions properties are often called methods. Without methods we would only have a database.
+Object are a collection of name-value pairs, or "Objects are really just containers for an unordered list of properties, each of which has a name [aka key] and a value." The object contains memory references to these properties. 
+
+Functions properties are often called methods. Without methods we would only have a database.
 
 Objects are the most fundamental data type, and they are the only complex type. And, unlike primitive data types objects are mutable.
 
@@ -4360,6 +4264,18 @@ This example shows that the closure contains any local variables that were decla
     sayAlice()();// logs "Hello Alice"
 
 Note that the variable alice is actually declared after the anonymous function. The anonymous function is declared first; and when that function is called it can access the alice variable because alice is in the same scope (JavaScript does variable hoisting). Also sayAlice()() just directly calls the function reference returned from sayAlice() — it is exactly the same as what was done previously, but without the temporary variable.
+
+Hoisting: in many language you can don't use a variable or function before you have declared it. However something like the following works in JS:
+
+    b(); // Called b
+    console.log(a); // undefined - but not an error!
+
+    var a = 'Hello World';
+    function b() {
+        console.log('Called b');
+    }
+
+It looks as if the declaration of both a and b() were moved to the top of the file by the engine, eg just a 'var a;', while the assignment to a was left in place. If you were to use let or const the declaration does not work either. And, if you used a function assignment rather than a function declaration for b, then you'll get an error. The declarations have not actually occured but rather hoisting exists because the creation of an execution context occurs in two phases. In the 'Creation phase' the global object, 'this', and the link to the outer environment are all created. Also the parser works through your code and looks at the variables and functions you have declared. It does this so it can then go ahead and set up memory space for them. So, before the code is executed line by line the variables already point to a place in memory. Only, the parser has no value to store at those memory locations yet so it provides 'undefined' by default. [easier to just use let and const - then you'll get a nice warning instead of an unexpected undefined]. 
 
 
 The next example is a real gotcha for many people, so you need to understand it. Be very careful if you are defining a function within a loop: the local variables from the closure do not act as you might first think.
@@ -7353,3 +7269,89 @@ $('#login').click(function() {
     // good example of chaining
     loginGrtr.setLang($('#lang').val()).HTMLGreeting('#greeting', true).log();
 })
+
+
+Where to place JavaScript
+-----------------------------
+
+JavaScript can be placed in the <body> and the <head> sections of an HTML page. It is inserted between <script> and </script> tags. A JavaScript function is a block of JavaScript code, that can be executed when "asked" for. For example, a function can be executed when an event occurs, like when the user clicks a button.
+
+Scripts can also be placed in external files using the file extension .js. External scripts are practical when the same code is used in many different web pages. To use an external script, put the name of the script file in the src (source) attribute of the <script> tag:
+
+    <!DOCTYPE html>
+    <html>
+        <body>
+            <script src="myScript.js"></script>
+        </body>
+    </html>
+
+Such files make code easier to maintain, separate JS and HTML, and increase speed.
+
+In fact, for debugging a js file in a browser all you need in an html file is:
+
+    <html>
+        <script src="fileName.js"></script>
+    </html>
+
+And then paste the file location of this html file in your browser. eg file:///C:/Users/chamilton/Desktop/fileName.html 
+
+
+Output
+----------------------------
+
+JavaScript does NOT have any built-in print or display functions. However it is possible to:
+
+1. create a pop up window with: window.alert(). In this simple example an '11' is displayed in pop up window:
+
+    <!DOCTYPE html>
+    <html>
+        <body>
+            <script>
+                window.alert(5 + 6);
+            </script>
+        </body>
+    </html>
+
+
+2. We can insert text into a webpage with document.write(): <script> document.write(5 + 6); </script>
+
+Using document.write() after an HTML document is fully loaded, will delete all existing HTML and replace it with the desired text:
+
+    <body>
+        <h1>My First Web Page</h1>
+        <p>My first paragraph.</p>
+        <button type="button" onclick="document.write(5 + 6)">Try it</button>
+    </body>
+
+The document.write() method should be used only for testing.
+
+
+3. To access an HTML element, JavaScript can use the document.getElementById(id) method:
+
+    <body>
+        <p id="demo"></p>
+        <script>
+            document.getElementById("demo").innerHTML = 5 + 6;
+        </script>
+    </body>
+
+4. In your browser, you can use the console.log() method to display data. Activate the browser console with F12, and select "Console" in the menu: 
+<script> console.log(5 + 6); </script>  //just put console.log(5 + 6); in the console rather than running it from within a script.
+
+5. When representing an object in the console or in the page it must first be placed into a string. There are several ways to do this.
+    - JSON.stringify(myObject, undefined, "  ")  (see the JSON section)
+    - console.log("here is my object: ", myObject );
+
+In this second case you get a nice drop down in the console.
+
+
+
+
+Debugging
+------------------------------
+
+In the dev tools go to Sources and select the JS file of interest. Click on any line you would like to stop at. Once you run the code (refresh will do) you will then pause at the line break. Note that not all of the line may be executed at once. The executed section is darker. "Step over" will let the current function run and complete. "Step Into" will go inside the working of the function.
+
+You can also select debugging points by using the keyword 'debugger' in your source code.
+
+Changes in memory are also available by going to Profiles and taking snapshots of the heap. Note that you can't do this when the debugger is working.
