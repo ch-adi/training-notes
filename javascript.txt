@@ -1363,9 +1363,9 @@ So, the value of 'this' depends upon how a function is called. That is, how the 
         var a = "hello world";
         console.log(window.a) // "hello world"   // window.a is the same thing as a
 
-    If the code is not in a the global execution context then the engine supplies a link to the outer environment. In this way, a non-global execution context has several features: a 'this', a link to the outer environment, a variable environment and 'arguments'. 'Arguments' hold all those values you have passed to the function.
+    The engine supplies a link to the outer environment so that if a variable does not exist it can look up the scope chain to find that variable. In this way, a non-global execution context has several features: a 'this', a link to the outer environment, a variable environment and 'arguments'. 'Arguments' hold all those values you have passed to the function.
 
-    A non-global execution content is created when a function is invoked/called. These execution contexts stack on top of each other, so that whichever is on top is the currently running context. Code is executed line by line and if another function invocation is reached, then a new context is generated and sits on the top of the stack. When all the code in the top context has been executed, then that context is popped off the stack.
+    A non-global execution content is created when a function is invoked/called. These execution contexts stack on top of each other (it's actually called the execution stack), so that whichever is on top is the currently running context. Code is executed line by line and if another function invocation is reached, then a new context is generated and sits on the top of the stack. When all the code in the top context has been executed, then that context is popped off the stack.
 }
 
 In most cases, the value of 'this' is determined by how a function is invoked. It can't be set by assignment during execution ('this' is not a variable. It is a keyword), and it may be different each time the function is called. It also has some differences between strict mode and non-strict mode. ES5 introduced the bind method to set the value of a function's this regardless of how it's called, and ECMAScript 2015 introduced arrow functions (see below) whose 'this' is lexically scoped; it is set to the 'this' value of the lexically enclosing execution context.
@@ -3593,7 +3593,7 @@ So we need t
 Scope and Hoisting
 -------------------------------------
  
-Scope basically means 'where can I access a variable?' or "where a variable is available in your code".
+Scope basically means 'where can I access a variable?' or "where a variable is available in your code". If a variable is not available to you it is 'out of scope'.
 
 Primer example:
 
@@ -3606,7 +3606,7 @@ Recall that part of an execution context has a reference to the outside environm
 
 Also, understand the concept of a lexical environment: a lexical environment exists in languages in which WHERE you write is important (for the compiler). When we talk about the lexical context for a piece of code, we mean where it has been written and what is around it. For example, you might say the contents of a function sit lexically within that function. Also, the relative position of code pieces such as variables can give you an idea of where information sits in memory.  
 
-Here the b() execution context has a reference to the global execution context. The JS engine is bypassing the a() execution context in it's search for myVar's value. While the b() execution context does sit on top of the a() execution context, we say 'lexically' that the b() execution context actually sits on top of the global execution context. The b() 'lexical environment' sits next to the a() lexical environment. That is, both functions are declared at the same level in the same file. While b() is called inside a(), b() is not declared inside a().
+Here function b sits lexially within the global execution environemnt. So the b() execution context has a reference to the global execution context. The JS engine is bypassing the a() execution context in it's search for myVar's value. While the b() execution context does sit on top of the a() execution context in the execution stack, we say 'lexically' that the b() execution context actually sits on top of the global execution context. The b() 'lexical environment' sits next to the a() lexical environment. That is, both functions are declared at the same level in the same file. While b() is called inside a(), b() is not declared inside a().
 
 So, the scope chain is a series of links of outer environment references.
 
@@ -3654,6 +3654,7 @@ aVariable is block scoped within the if's curly braces. Unike var, if a variable
     // c is now:  undefined
     // c is now:  true
 
+[const is similar, and it's block scoping explains why you can use a const variable inside a for loop.]
 
 
 There are also 4 other scopes in the language: Global, `with`, `catch`,and `eval`. These tend not to be used much.
@@ -4277,6 +4278,8 @@ Hoisting: in many language you can don't use a variable or function before you h
 
 It looks as if the declaration of both a and b() were moved to the top of the file by the engine, eg just a 'var a;', while the assignment to a was left in place. If you were to use let or const the declaration does not work either. And, if you used a function assignment rather than a function declaration for b, then you'll get an error. The declarations have not actually occured but rather hoisting exists because the creation of an execution context occurs in two phases. In the 'Creation phase' the global object, 'this', and the link to the outer environment are all created. Also the parser works through your code and looks at the variables and functions you have declared. It does this so it can then go ahead and set up memory space for them. So, before the code is executed line by line the variables already point to a place in memory. Only, the parser has no value to store at those memory locations yet so it provides 'undefined' by default. [easier to just use let and const - then you'll get a nice warning instead of an unexpected undefined]. 
 
+(note that the creation phase is followed by the 'Execution Phase' - your code is run line by line)
+
 
 The next example is a real gotcha for many people, so you need to understand it. Be very careful if you are defining a function within a loop: the local variables from the closure do not act as you might first think.
 
@@ -4541,7 +4544,32 @@ Callback example:
 
     sayHiLater(); // three second later: 'Hi!';
 
-This example demonstates a number of JS freatures. setTimeout takes an anonyous function as an argument: anonymous functions, functions as first class values, function expressions. sayHiLater actually executes and closes before the greeting is logged in the console. So setTimeout stays in existance waiting for 3 seconds (asynchronus) and has access to greeting as part of a closure. Lastly, we also see a callback. When setTimeout has done something (waited for three seconds by regeristering an event in the event queue) then it exectutes a callback function. A callback function is "A function you give to another function to be run when the other function is finished". So the function you call (ie invoke) 'calls back' by calling the function you gave it when it is finished. 
+This example demonstates a number of JS freatures. setTimeout takes an anonyous function as an argument: anonymous functions, functions as first class values, function expressions. sayHiLater actually executes and closes before the greeting is logged in the console. So setTimeout stays in existance waiting for 3 seconds (asynchronus) and has access to greeting as part of a closure. Lastly, we also see a callback. When setTimeout has done something (waited for three seconds by regeristering an event in the event queue) then it executes a callback function. A callback function is "A function you give to another function to be run when the other function is finished". So the function you call (ie invoke) 'calls back' by calling the function you gave it to invoke when it is finished. 
+
+What is the event queue? It is full of notifications of events from outside the JS engine. For example browsers may simulataneouly be running a rendering engine and also handling http requests. While JS may be synchronous it is living in an async environment, which includes process in the OS such as file operations requested by the JS engine. A specific example would be a click on the page. That event would be sent to the JS engine from elsewhere in the browser and then added to the event queue. When the exection stack has been cleared (ie each execution context and executed all it's code and popped off the exection stack), the the queue is addresed. In this case any registered function, which will be a so called 'async' function, is checked to see if it handles the click. If so, an execution context is generated from the click handler and added to the exection context. 
+
+We can show that the event queue is checked once the exection stack is clared by using sync for of set timeout:
+
+    function waitThreeSeconds() {
+        var ms = 3000 + new Date().getTime();
+        while(new Date() < ms) {};
+        console.log('finished function');
+    }
+
+    function clickHandler() {
+        console.log('click event');
+    }
+
+    document.addEventListener('click', clickHandler);
+    waitForThreeSeconds();
+    console.log('finished execution');
+
+    // logging from clicking during the first three seconds of page load:
+    // finished function
+    // finished execution
+    // click event
+
+
 
 
 Garbage Collection
@@ -6375,7 +6403,6 @@ You could also easily re-write this for regular callbacks to accept a success an
 
 The Stack and Recursive Functions
 ---------------------------------------
-
 
 In stack based languages, like Javascript, function invocations create a new "frame" on the stack which holds the context, scope identifiers, return location and other items necessary to execute the function and return control to the caller.
 
