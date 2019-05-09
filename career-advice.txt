@@ -147,6 +147,14 @@ Sometimes, no matter which way you do something, it is still a bug.
 
 
 
+Developing into a developer:
+
+Mathematics : Calculus, Trigonometry, Algebra and Linear Algebra are the most important basis. Then Graph Theory and Category Theory are very important fields. You can find courses on KhanAcademy for free. MIT courses are good too.
+Algorithms : the Introduction to Algorithms book is pretty classic. https://mitpress.mit.edu/books/introduction-algorithms-third-edition 
+Computer Architecture and Operating Systems : OSTEP and Write Great Code are very good starting resources. http://pages.cs.wisc.edu/~remzi/OSTEP/Homework/homework.html https://nostarch.com/greatcode.htm 
+Networks : Computer Networking - A Top Down approach is just the best book for it. https://www.amazon.com/Computer-Networking-Top-Down-Approach-6th/dp/0132856204
+Programming : just learn a few programming languages (C is mandatory*) and solves stuff at TopCoder, ProjectEuler, HackerRank etc
+
 
 
 
