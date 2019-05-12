@@ -12,3 +12,31 @@ compiling: $ tsc script.ts, will, by default, create script.js in the same direc
 
 
 
+Types 
+--------------------------------
+
+
+Tuples
+
+In addition to all the regular es6 types, TypeScript also includes tuples. In TS these are arrays with mixed type and a limited number of items. 
+
+For example I might have a normal array for my address:
+
+    let address = [145, "Good Street"];
+
+The compiler will treat this as an array of any type. I.e. :
+
+    let address: any[] = [145, "Good Street"];
+
+However, to make it a tuple we declare like this:
+
+    let address: [number, string] = [145, "Good Street"];
+
+Then if we re assigned with the number and string reversed we would get an error:
+
+    address = ["Good Street", 145];  // TS error
+
+
+
+    
+
