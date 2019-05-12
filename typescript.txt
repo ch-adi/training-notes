@@ -1,0 +1,14 @@
+**********************************************************************************
+
+
+                        TypeScript
+
+
+**********************************************************************************
+
+playgound: https://www.typescriptlang.org/play/index.html
+
+compiling: $ tsc script.ts, will, by default, create script.js in the same directory
+
+
+
