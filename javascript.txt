@@ -199,6 +199,12 @@ Also note that array destructuring is possible:
     var [one, two, three] = foo;
 
 
+You can also change variable names while object destructuring with the use of a colon:
+
+	const myObject = {name: "bob", age: 99, isGood: true};
+	const { name: myName, age: myAge, isGood: good } = myObject;
+	console.log(myName, myAge, good);  // bob 99 true
+
 
 6. Comments are not executed. Code after double slashes // or between /* and */ is treated as a comment.
 
