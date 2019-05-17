@@ -1807,7 +1807,28 @@ One way to access the arguments passed into a function is the 'arguments' keywor
 
 Although the copy and paste does not show it here, the logging gives italicised elements. This is because this the arguments object is 'array-like'. It acts and looks like an array but does not have all the features of an array.
 
-As time goes on this will be replaced with spread parameters. You can wrap up an any extra arguments into an array. Eg, function greet(firstName, lastName, language, ...other) will have an array called other available.
+As time goes on this will be replaced with rest and spread parameters. You can wrap up an any extra arguments into an array. Eg, function greet(firstName, lastName, language, ...other) will have an array called other available (see rest and spread just below).
+
+
+
+
+Rest and Spread Operators
+
+Both have the same syntax, which is an elipses. The spread operator spreads out an array into a series of comma separated values. For example the built in math function can take any number of numbers, but does not take an array. So if our data is an array we can just spread it out:
+
+    const numbers = [1, 2, 3];
+    console.log(Math.max(...numbers));  // 3
+
+The rest operator makes an array from the 'rest' of the arguments into a function. So this is a much better way collect an unknown/known number of arguments because we can now use array methods on those arguments.
+
+    function makeArray(name: string, ...args: number[]) {  // capturing the 'rest' of the arguments
+        return args;
+    }
+
+    console.log(makeArray("Max", 1, 2, 3))   // [1, 2, 3]
+
+
+
 
 
 Function Overloading
