@@ -1,8 +1,5 @@
 
 
-
-
-
 Do pet projects. Push them to github with an elegant readme. Follow all the best practices. Do not write messy code just because it's your pet project. Create a detailed portfolio out of these projects and put them out in your personal website.
 
 Contribute to open source projects. Even little things like improving a sentence in documentation or reporting a new bug are very important.
@@ -15,6 +12,19 @@ Self taught engineers:
 Instead of trying to figure out what a self-taught programmer should study, the key is to be curious and deep dive into unfamiliar concepts whenever you face them. Eventually you will realize that self-taught and formally-educated programmers will always have something new to learn.
 
 
+What common career mistakes do programmers typically make?
+
+Concentrating on learning only technologies and neglecting knowledge in software engineering principles and concepts.
+Not asking for a raise when they truly deserve it.
+Not making their work visible and expecting management to pay attention to their individual contributions.
+Not talking enough to end-users or product owners, and as a result, building the wrong things all the time.
+Staying late for work and neglecting time with family, friends and yourself. Learn to say no.
+Not investing time in improving your soft skills, they are really important in this profession.
+Not reading enough, that’s easy-to-get knowledge with the potential of skyrocketing your skill level.
+Not writing tests, tests help save your reputation.
+Being an unsavory character, there is a list of people I’d never recommend for an interview, it was a pain to work with them.
+Going to meetings that could have been emails. Respect your time and remember you are not paid to attend unnecessary meetings.
+Losing the perspective that your job is not to write code, your job is to provide value, whatever that means in your context.
 
 
 What are the biggest myths software engineers believe?
