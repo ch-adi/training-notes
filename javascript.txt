@@ -1075,7 +1075,7 @@ One powerful JavaScript feature is assigning an entire function (ie. not just a 
 Pure Functions:
 
 
-Pure functions are affected soly by the values of their arguments.  Pure functions do not have any observable side affects like network or database calls [see more below somewhere, I think, for side effects]. Pure functions just calculate a new value. You can be confident that if whenever a pure function is called with the same set of arguments it will always return the same value. They are predictable.
+Pure functions are affected soly by the values of their arguments.  Pure functions also do not have any observable side affects like network or database calls [see more below somewhere, I think, for side effects]. Pure functions just calculate a new value. You can be confident that if whenever a pure function is called with the same set of arguments it will always return the same value. They are predictable.
 
 Also, pure functions do not modify the values to passed to them.
 
@@ -1086,7 +1086,8 @@ Also, pure functions do not modify the values to passed to them.
     }
 
     function sqaureAll(items) {
-        return items.map(square);    //unlike the sqaureAll() example below, .map() returns a new array so that it does not override the items array. 
+        //unlike the sqaureAll() below, map() returns a new array so that it does not override items.
+        return items.map(square);     
     }
 
 
@@ -1107,10 +1108,9 @@ Also, pure functions do not modify the values to passed to them.
 
 Namespaces
 
-
 A namespace is a container for variables and functions. It is typically used to keep variables and fuctions with the same name separate and avoid naming collisions. JS does not have namespaces but we can fake it with objects.
 
-    var greet = 'hello'
+    var greet = 'hello';
     var greet = 'hola';
 
     console.log(greet); // hola 
@@ -1124,19 +1124,17 @@ A namespace is a container for variables and functions. It is typically used to 
 
 Arguments Object
 
-
 JavaScript functions have a built-in object called the arguments object. It is a special construct available inside all function calls. 
 
-It represents the list of arguments that were passed in when invoking the function. The arguments object is an array-like object. It has a length property that corresponds to the number of arguments passed into the function. You can access these values by indexing into the array, e.g. arguments[0] is the first argument. 
+It represents the list of arguments that were passed in when invoking the function. The arguments object is an array-like object. It has a length property that corresponds to the number of arguments passed into the function. You can access these values by indexing like an array, e.g. arguments[0] is the first argument passed into a function. 
 
-One example is using a function to find the highest value in a list of numbers:
+One example is using a function to find the highest value in a list of numbers. It allows for an indeterminant number of arguments.
 
-
-    x = findMax(1, 123, 500, 115, 44, 88); //allowing for an indeterminant number of arguments! 
+    const x = findMax(1, 123, 500, 115, 44, 88);
 
     function findMax() {
-        var i;
-        var max = -Infinity;
+        let i;
+        let max = -Infinity;
         for (i = 0; i < arguments.length; i++) {
             if (arguments[i] > max) {
                 max = arguments[i];
@@ -1148,8 +1146,7 @@ One example is using a function to find the highest value in a list of numbers:
 
 The only other standard property of arguments is callee. This always refers to the function currently being executed. 
 
-
-    var myfunc = function(one) {
+    const myfunc = function(one) {
       console.log(arguments.callee === myfunc);         //true
       console.log(arguments[0] === one);                //true
       console.log(arguments[1] === 2);                  //true
@@ -1158,24 +1155,23 @@ The only other standard property of arguments is callee. This always refers to t
 
     myfunc(1, 2, 3);
 
-This construct is very useful and gives javascript functions a lot of flexibility. But there is an important gotcha. The arguments object behaves like an array, but it is not an actual array. It does not have Array in it's prototype chain and it does not respond to any array methods, e.g. arguments.sort() raises a TypeError. Instead you need to copy the values into a true array first. An easy approach is a for-loop:
+This construct is very useful and gives javascript functions flexibility. But, there is an important gotcha. While the arguments object looks like an arra, which a length property and array like indexing, it is not actually an array. It does not have Array in it's prototype chain and it does not respond to any array methods, e.g. arguments.sort() raises a TypeError. Instead you need to copy the values into a true array first. An easy approach is a for-loop:
 
-    var args = [];
+    let args = [];
 
     for(var i = 0; i < arguments.length; i++) {
       args.push(arguments[i]);
     }
 
 
-The traditional was in ECMA 5 is to use:
+An ECMA 5 approach is to use slice:
 
-    var argsArray = Array.prototype.slice.apply(arguments)
+    const argsArray = Array.prototype.slice.apply(arguments);
 
 
 In ECMA 6 it is easier with a special 'from' method:
 
-    var argsArray = Array.from(arguments)
-
+    const argsArray = Array.from(arguments)
 
 
 
@@ -1289,19 +1285,17 @@ Add parentheses around the function to indicate that it is a function expression
     })();
 
 
-`
-
 
 'this' keyword  ( this keyword , "this" ):
 
 In JavaScript, the thing called 'this', is the object that "owns" the current code. The value of this, when used in a function, is the object that "owns" the function.  Compare the next two functions. The second works on a property from some other object that has not been passed into the function:
 
     function talk(sound) {
-        console.log(sound)
+        console.log(sound);
     }
 
     function talk() {
-        console.log(this.sound)
+        console.log(this.sound);
     }
 
 When code is executed it enters a [function based] 'execution context'. Part of the set up for this context is the assignment of a value to 'this'. If the value assigned refers to an object then property accessors prefixed with the 'this' keyword reference properties of that object. If the value assigned (internally) is null then the this keyword will refer to the global object.
@@ -1318,7 +1312,7 @@ So, the value of 'this' depends upon how a function is called. That is, how the 
     Another way of thinking about global is code 'not inside a function'. Variables and functions that are not inside a function are automatically attached to the global object as a key value pair.
 
         var a = "hello world";
-        console.log(window.a) // "hello world"   // window.a is the same thing as a
+        console.log(window.a); // "hello world"   // window.a is the same thing as a
 
     The engine supplies a link to the outer environment so that if a variable does not exist it can look up the scope chain to find that variable. In this way, a non-global execution context has several features: a 'this', a link to the outer environment, a variable environment and 'arguments'. 'Arguments' hold all those values you have passed to the function.
 
