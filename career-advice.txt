@@ -58,7 +58,12 @@ I should only fix issues once a client complains. It's ok to ignore/overlook bug
 Last but not the least -Using Mac OSX makes a better programmer
 
 
-
+Charasmatic People
+1. Confident
+2. Humble
+3. Smile
+4. Passion
+5. Ask questions about others
 
 
 What are the characteristics of a bad software engineer?
