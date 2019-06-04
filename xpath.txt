@@ -1,0 +1,63 @@
+XPath
+***********************************************************
+
+
+
+see https://blog.scrapinghub.com/2016/10/27/an-introduction-to-xpath-with-examples 
+
+
+
+TheXPath language allows you to extract data based on text elements' contents, and not only on the page structure. 
+
+  <html>
+    <head>
+      <title>My page</title>
+    </head>
+    <body>
+      <h2>Welcome to my <a href="#">page</a></h2>
+      <p>This is the first paragraph.</p>
+      <!-- this is the end -->
+    </body>
+  </html>
+
+XPath handles any XML/HTML document as a tree. This tree's root node is not part of the document itself. It is in fact the parent of the document element node (<html> in case of the HTML above). 
+
+root
+  html
+    head
+      title
+        My Page (text node)
+     body
+        h2
+          Welcome ... (text node)
+          a
+            href (attribute node)
+            page (text node)
+        p
+          This is the first paragraph (text node)
+        this is the end (comment node)
+    
+ So we see four types of nodes in this tree. Element nodes [not labeled for clarity], attribute nodes, comment nodes, and text nodes.
+ 
+ 
+ Starting at the root (aka 'context node') we can specify a 'location path' to find a title element:
+ 
+  /html/head/title
+  
+This has three location steps, which are separated by slashes. 
+ 
+However, we usually don't know or don’t care about the full explicit node-by-node path, we just care about the nodes with a given name. We can select them using:
+
+  //title
+  
+ Which means: look in the whole tree, starting from the root of the tree (//) and select only those nodes whose name matches title. THis is actually an abbreviated syntax for:  
+ 
+  /descendant-or-self::node()/child::title
+  
+  
+descendant-or-self means the current node or any node below it in the tree. This part of the expression is called the axis and it specifies a set of nodes to select from, based on their direction on the tree from the current context (downwards, upwards, on the same tree level). Other examples of axes are: parent, child, ancestor, etc
+  
+ 
+ 
+  
+ 
