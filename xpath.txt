@@ -3,6 +3,10 @@ XPath
 
 
 
+*** positions in XPath start at 1, not 0 ****
+
+
+
 see https://blog.scrapinghub.com/2016/10/27/an-introduction-to-xpath-with-examples 
 
 
@@ -50,14 +54,106 @@ However, we usually don't know or don’t care about the full explicit node-by-n
 
   //title
   
- Which means: look in the whole tree, starting from the root of the tree (//) and select only those nodes whose name matches title. THis is actually an abbreviated syntax for:  
+ Which means: look in the whole tree, starting from the root of the tree (//) and select only those nodes whose name matches title. This is actually an abbreviated syntax for:  
  
-  /descendant-or-self::node()/child::title
+  /descendant-or-self::node()/child::title     [child is the default axis]
   
   
-descendant-or-self means the current node or any node below it in the tree. This part of the expression is called the axis and it specifies a set of nodes to select from, based on their direction on the tree from the current context (downwards, upwards, on the same tree level). Other examples of axes are: parent, child, ancestor, etc
+descendant-or-self means the current node or any node below it in the tree. This part of the expression is called the axis and it specifies a set of nodes to select from, based on their direction on the tree from the current context (downwards, upwards, on the same tree level). Other examples of axes are: parent, child, ancestor, etc.
   
- 
- 
+The next part of the expression, node(), is called a node test, and it contains an expression that is evaluated to decide whether a given node should be selected or not. In this case, it selects nodes from all types. Then we have another axis,child, which means go to the child nodes from the current context, followed by another node test, which selects the nodes named as title.
+
+So, the axis defines where in the tree the node test should be applied and the nodes that match the node test will be returned as a result.
+
+You can test nodes against their name or against their type. For example, this name test selects all a nodes which are directly under an h2 node:
+
+  //h2/a
+  
+and these are some type tests:
+
+  //comment()	Selects only comment nodes.
+  //node()	Selects any kind of node in the tree.
+  //text()	Selects only text nodes, such as "This is the first paragraph".
+  //*	Selects all nodes, except comment and text nodes.
+  
+We can also combine name and node tests in the same expression. For example:
+
+  //p/text()    selects the text nodes from inside p elements
+  
+
+For further filtering consider this html documentL
+
+  <html>
+    <body>
+      <ul>
+        <li>Quote 1</li>
+        <li>Quote 2 with <a href="...">link</a></li>
+        <li>Quote 3 with <a href="...">another link</a></li>
+        <li><h2>Quote 4 title</h2> ...</li>
+      </ul>
+    </body>
+  </html>
+
+  //li[position() = 1] select only the first li node
+
+The expression surrounded by square brackets is called a predicate and it filters the node set returned by //li (that is, all li nodes from the document) using the given condition. [so not going further down the tree but filtering those tree nodes you have collect so far].
+
+We can abbreviate the expression to:
+
+  //li[1]
+
+                                ****** positions in XPath start at 1, not 0 ******
+
+Other predicate examples:
+
+  //li[position()%2=0]	Selects the li elements at even positions.
+  //li[a]	Selects the li elements which enclose an a element.
+  //li[a or h2]	Selects the li elements which enclose either an a or an h2 element.
+  //li[ a [ text() = "link" ] ]	Selects the li elements which enclose an a element whose text is "link". Can also be written as //li[ a/text()="link" ].
+  //li[last()]	Selects the last li element in the document.
+  
+So, a location path is basically composed by steps, which are separated by / and each step can have an axis, a node test and a predicate. So this:
+
+  //li[ 4 ]/h2[ text() = "Quote 4 title" ]
+  
+means:
+
+  /descendant-or-self::node()/child::li[ position() = 4 ]/child::h2[ text() = "Quote 4 title" ]
+
+We can also combine multiple XPath expressions in a single one using the union operator |:
+
+  //a | //h2  select all a and h2 elements
+
+
+More on attributes:
+
+We can access any node attribute using the @attributename syntax.
+
+Consider links like this <li id="begin"><a href="https://scrapy.org">Scrapy</a></li>. We can select all the a elements from the document and for each of those elements, it checks whether their href attribute starts with "https". 
+
+    //a[starts-with(@href, "https")]  
+
+other examples:
+
+  //a[@href="https://scrapy.org"]	Selects the a elements pointing to https://scrapy.org.
+  //a/@href	Selects the value of the href attribute from all the a elements in the document.
+  //li[@id]	Selects only the li elements which have an id attribute.
+  
+
+
+
+  
+  
+
+
+
+
+
+
+  
+
+
+
+
   
  
