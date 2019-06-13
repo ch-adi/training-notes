@@ -140,17 +140,72 @@ other examples:
   //li[@id]	Selects only the li elements which have an id attribute.
   
 
+Axes
 
+  <html>
+    <body>
+      <p>Intro paragraph</p>
+      <h1>Title #1</h1>
+      <p>A random paragraph #1</p>
+      <h1>Title #2</h1>
+      <p>A random paragraph #2</p>
+      <p>Another one #2</p>
+      A single paragraph, with no markup
+      <div id="footer"><p>Footer text</p></div>
+    </body>
+  </html>
 
+  //h1/following-sibling::p[1]  // extract only the first paragraph after each of the titles.
+
+What if we want to select only the text that is right before the footer? We can use the preceding-sibling axis:
+
+  //div[@id='footer']/preceding-sibling::text()[1]
+
+Select the parent of the p element whose text is "Footer text"
+
+  //p[ text()="Footer text" ]/..      //used .. here as a shortcut to the parent axis.
+
+And this is equivalent:
+
+ //*[p/text()="Footer text"]  
+ 
+[ So 'predicate' expressions test the nodes inside the element in question???]
   
+
+Other:
+
+The basic XPath syntax is similar to filesystem addressing. If the path starts with the slash / , then it represents an absolute path to the required element.
+  /AAA
+  /AAA/CCC
+  /AAA/DDD/BBB
+
+If the path starts with // then all elements in the document which fulfill following criteria are selected.
+  //BBB
+  //DDD/BBB
+
+Several paths can be combined with a pipe:
+
+  /AAA/EEE | //DDD/CCC | /AAA | //BBB
   
 
+The star * selects all elements located by preceeding path
+  /AAA/CCC/DDD/*
+  /*/*/*/BBB
+  //*
 
+Playing with names of selected elements:
 
+Function name() returns name of the element, the starts-with function returns true if the first argument string starts with the second argument string, and the contains function returns true if the first argument string contains the second argument string.
 
+  //*[name()='BBB']               // equivalent to //BBB
+  //*[starts-with(name(),'B')]
+  //*[contains(name(),'C')]
 
+Beware of the difference between //node[1] and (//node)[1]:
 
-  
+    //node[1]    // selects all the nodes occurring first under their respective parents.
+
+    (//node)[1]   // selects all the nodes in the document, and then gets only the first of them.  
 
 
 
