@@ -1548,17 +1548,15 @@ A function constructor is a normal function that is used to create objects.  If 
 
 Because 'this' has been automaticaly created then we can attach things to it inside the function before it is returned:
 
+It's also possible to add to this object's prototype (see 'prototype chain' - in js inheritance is from other objects, not a class):
+
     function Person (firstName, lastName) {
         this.lastName = lastName;
         this.firstName = firstName;
     }
 
-    var john = new Person('John', 'Doe');
-
-It's also possible to add to this object's prototype (see 'prototype chain' - in js inheritance is from other objects, not a class):
-
     Person.prototype.greet = function() {
-        // use 'this' so that we refer to the object and not some variable (so don't use an arrow function here)
+        // use 'this' so that we refer to the object and not something else (so don't use an arrow function here)
         console.log('hello ' + this.firstName + ' ' + this.lastName);
     }
 
@@ -1566,8 +1564,8 @@ The naming here is a little confusing. This prototype is the prototype of any ob
 
 The js engine will now search down the prototype chain for this method:
 
+    var john = new Person('John', 'Doe');
     john.greet();
-
 
 If you ever want to see the prototype for an object use __proto__ :
 
@@ -2617,13 +2615,32 @@ In classical object-orientated prgramming this can become a complicated mess. Wi
 
 A real world analogy to classes is a blueprint. From one blueprint you can create many buildings (ie objects). The real world analogy of a prototype is a back-up. Rather than making a fully new object with all the methods from the parent, JS instead moves up the prototype chain and checks to see if a method is available from another object.
 
-For example, objects created using an object literal, or with new Object(), inherit from a prototype called Object.prototype. And, objects created with new Date() inherit the Date.prototype. 
+For example, objects created using an object literal, or with new Object(), inherit from a prototype called Object.prototype. And, objects created with new Date() inherit the Date.prototype.
 
 All objects may have prototypes, and prototypes are objects so they, in turn, may have prototypes, which may have prototypes, and so on forming what is called the prototype chain (not the same as the scope chain). The prototype chain ends when one of the objects in the chain has a null prototype. The default prototype for the Object constructor has a null prototype so
 
     var objectRef = new Object(); //create a generic javascript object.
 
 creates an object with the prototype Object.prototype that itself has a null prototype. So the prototype chain for objectRef contains only one object: Object.prototype. That is, the Object.prototype is on the top of the prototype chain. Similarly, what is the prototype of that empty object? It is the great ancestral prototype, the entity behind almost all objects, Object.prototype.
+
+[ If we use a function contstructor then an intermediate object is created. This object is the prototype of the object. This is an extented example from elsewhere in these notes:
+
+    // the new keyword generates a new object and 'this' automatically refers to this object.
+    function Person (firstName, lastName) {
+        this.lastName = lastName;
+        this.firstName = firstName;
+    }
+
+    // methods are placed on the intermediate object i.e. the prototype
+    Person.prototype.greet = function() {
+        console.log('hello ' + this.firstName + ' ' + this.lastName);
+    }
+
+    const john = new Person('John', 'Doe');
+
+    console.log(john.__proto__);  // Object { greet(), ... } 
+    console.log(john.__proto__.__proto__);  // Object { ... } - ie has all core JS Object properties
+    console.log(john.__proto__.__proto__.__proto);  // null
 
 So each object has a prototype property, which in turn will reference some properties. If a second object also references the same prototype object (which it can), then it is same properties, at the same place in memory, that both objects have access to.
 
@@ -2685,7 +2702,7 @@ To really explore the chain idea we can take this example further:
     prarieDog.makeGrowl();  // rrrr   
 
 
-Browsers provide you a direct way to directly assign a prototype but DO NOT ever do it. It has serious performance issues. 
+Browsers provide you a direct way to directly assign a prototype but DO NOT ever use it in production code. It has serious performance issues. 
 
     prarieDog.__proto__ = dog;  // The double underscore is reminder that should never use this!
 
@@ -2731,13 +2748,15 @@ So we see that with a for-in loop we pick up properties from the protoype chain 
         }
     }
 
+[Better ways to iterate through an object now exist. For example if use Object.keys(obj) then you can have an array to loop through].
+
 So now we can have an object reflect upon it's own properties. To extend this object to another object (ie, let another object share this object's properties) we can now just add the properties directly on the new object:
 
     newObject[key] = oldObject[key];
 
 This powerful extension pattern, which is not using the protoype chain, shows up in a lot of frameworks and libraries. However don't mix up this relfection-extend pattern with the 'extends' keyword (ends with an 's').
 
-When you add a property to an object, whether it is present in the prototype or not, the property is added to the object itself, which will henceforth have it as its own property. If there is a property by the same name in the prototype, this property will not noramlly affect the object. The prototype itself is not changed [ie the compiler looks to the object itself for the key in question and only looks further if it cannot find that key]. It is as if the upstream version has been hidden. 
+When you add a property to an object, whether it is present in the prototype or not, the property is added to the object itself, which will henceforth have it as its own property. If there is a property by the same name in the prototype, this property will not noramlly affect the object. The prototype itself is not changed [ie the compiler looks to the object itself for the key in question and only looks further if it cannot find that key]. It is as if the upstream version has been hidden.
 
 If you do want to access a hidden upstream method you can still do so. Say we have written our own toString method but we still want to plug the current object into the original toString (tries to convert the contents of an object into a string):
 
