@@ -1183,7 +1183,7 @@ In ECMA 6 it is easier with a special 'from' method:
 CallBack Functions (see also Closures)
 
 
-Callback functions are derived from a programming paradigm known as functional programming. At a fundamental level, functional programming specifies the use of functions as arguments. A callback function, also known as a higher-order function, is a function that is passed to another function. 
+Callback functions are derived from a programming paradigm known as functional programming. At a fundamental level, functional programming specifies the use of functions as arguments. A callback function is a function that is passed to another function. A higher-order function is a function that can take another function as an argument, or that returns a function as a result.
 
 In JavaScript, functions are first-class objects. That is, functions are of the type Object and they can be used in a first-class manner like any other object (String, Array, Number, etc.) since they are in fact objects themselves. They can be stored in variables, passed as arguments to functions, created within functions, and returned from functions.
 
@@ -2083,7 +2083,7 @@ One common way around this problem is recognizing that we are in the global cont
 Modules
 ------------------------------
 
-Modules are a great way to organise more complex code, kind of like dividing a book into chapters. There is thus a clear focus for every module and related things can be found close together. They also provide for reuse. Also, like an interface, they isolate/privatise code and provide a public interface (see the module example in the Closure section). This is called decoupling.
+Modules are a great way to organise more complex code, kind of like dividing a book into chapters. There is thus a clear focus for every module and related things can be found close together. They also provide for reuse. Also, like an interface, they isolate/privatise code and provide a public interface (see the module example in the section). This is called decoupling.
 
 Most modern programming languages have a scope level between global (everyone can see it) and local (only this function can see it). JavaScript does not. Thus, by default, everything that needs to be visible outside of the scope of a top-level function is visible everywhere. This can lead to the problem of namespace pollution; the problem of a lot of unrelated code having to share a single set of global variable names.
 
@@ -3881,7 +3881,7 @@ The variable add is assigned the return value of a self-invoking function. The s
     var add2 = outer();
 
     add2(); // 1
-    add2{}; // 2
+    add2(); // 2
 }
 
 
@@ -4161,9 +4161,9 @@ A closure is the combination of a function and the lexical environment within wh
 
 The function 'greet' has finished executing and has come off the executon stack. Yet, 'whatToSay' still exists. The variable 'whatToSay' was sitting in the variable environment in the greet execution context. And all execution contexts occupy a place in memory. Normally a finished context is garbage collected.
 
-When hiFunc is called it enters it's own execution context. It's local variable is 'name'. However, it has a reference to 'whatToSay'. Since it can't find it locally it begins to look up the scope chain. It turns out that the hiFunc execution context still has an outer reference to it's lexical environemnt (where it sits in the code). So while the 'greet' execution context is gone from the stack, the contents of the variable environment still exist. The JS engine makes sure that it stays there for hiFunc to find. 
+When hiFunc is called it enters it's own execution context. It's local variable is 'name'. However, it has a reference to 'whatToSay'. Since it can't find it locally it begins to look up the scope chain. It turns out that the hiFunc execution context still has an outer reference to it's lexical environment (where it sits in the code). So while the 'greet' execution context is gone from the stack, the contents of the variable environment still exist. The JS engine makes sure that it stays there for hiFunc to find. 
 
-So we can now say the the hiFunc execution context has 'closed in' it's outer variables. The scope chain still holds when the execution context is gone. A closure is a functions execution context (and all that that context holds) plus the variables in it's scope chain.
+So we can now say the the hiFunc execution context has 'closed in' it's outer variables. The scope chain still holds when the execution context is gone. A closure is a function's execution context (and all that that context holds) plus the variables in it's scope chain.
 
 Here is a very interesting example in which we see that the value assigned to a scope variable can update before final invocation:
 
@@ -4186,11 +4186,16 @@ Here is a very interesting example in which we see that the value assigned to a 
 
     // 3
     // 3
-    // 3  all three execution contexts have the same 'i' in their scope chain, and 'i' is now 3 because the loop has finished.
+    // 3  all three execution contexts have the same 'i' in their scope chain, and 'i' is now 3 because the loop has finished. Variable 'i' has leaked into the buildFunctions environment.
 
-However, if you use 'let' instead of 'var' for the loop variable, the value is also baked in. 'let' variables are scopped to the block.
+If you use 'let' instead of 'var' for the loop variable, i has block scope within the for-loop. The results do differ:
 
-Another work around is to use an IIFE to create a new execution context for each loop variable:
+    // 0
+    // 1
+    // 2
+
+
+Another common work around is to use an IIFE to create a new execution context for each loop variable:
 
         arr.push(
             (function(j) {
@@ -4202,7 +4207,16 @@ Another work around is to use an IIFE to create a new execution context for each
 
 When the array element function looks for j it will first go and look in the IIFE's environment variables and part of the scope chain. 
 
-Closures provide an excellent mechanism for handling the asynchronous nature of most Javascript tasks. They rely upon the scope chain and nesting (see the Scope section); any variable declared in a parent scope is available to the inner scope. If the inner scope remains unexecuted it's scope is closed over those original variables from the parent scope. However, this does have interesting implications for memory (see Garbage Collection).
+Closures rely upon the scope chain and nesting (see the Scope section); any variable declared in a parent scope is available to the inner scope. If the inner scope remains unexecuted it's scope is closed over those original variables from the parent scope. However, this does have interesting implications for memory (see Garbage Collection).
+
+Closures provide an excellent mechanism for handling the asynchronous nature of most Javascript tasks. Imagine here that setTimout represents some async functionality that is eventually actioned after the loop as finished.
+
+	for(let i = 0; i < 10; i++) {    // important to use 'let' instead of 'var', othwise setTimout gets the last value of i
+	  console.log(i);
+	  setTimeout(function() {
+	    console.log('The number is ' + i);  // i is locked in at the time the loop first ran.
+	  },1000);
+	}
 
 A closure is an expression that can reference variables within its scope (when it was first declared), be assigned to a variable, be passed as an argument to a function, or be returned as a function result. As such it is a way of supporting first class functions. Another way to see a closure is as a stack frame which is allocated when a function starts its execution, and not freed after the function returns (as if a 'stack frame' were allocated on the heap rather than the stack!).
 
