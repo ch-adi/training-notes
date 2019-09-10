@@ -224,7 +224,7 @@ Hyphens are not allowed in JavaScript. It is reserved for subtractions. In progr
 
 JavaScript uses the Unicode character set.
 
-To make long statements more readable use the backslash (and use /*jshint multistr:true */ at the top of the file):
+To make long strings more readable use the backslash (and use /*jshint multistr:true */ at the top of the file):
 
 var text = "Hey, how are you \
 doing? My name is Emily.";
@@ -523,38 +523,37 @@ var person = undefined;     // Value is undefined, type is undefined
 
 Differences between null and undefined:
 
-typeof undefined             // undefined
-typeof null                  // object
-null === undefined           // false (not of equal value and equal type)
-null == undefined            // true
+    typeof undefined             // undefined
+    typeof null                  // object
+    null === undefined           // false (not of equal value and equal type)
+    null == undefined            // true
 
 
 Not a Number (NaN)
 
 NaN is a "number" type:
 
-> typeof NaN
-< "number"
+    > typeof NaN
+    < "number"
 
 
 Be careful with comparison involving NaN. While a NaN is a number, it is not any particular number:
 
-> var myNum = NaN
-> myNum > 0
-< false
-> myNum < 0
-< false
-> myNum == 0
-< false
-> NaN * 0
-< NaN                   //[crazy, no matter what it might have been we cant multiple it by zero and get rid of it]
+    > var myNum = NaN
+    > myNum > 0
+    < false
+    > myNum < 0
+    < false
+    > myNum == 0
+    < false
+    > NaN * 0
+    < NaN          //[crazy, no matter what it might have been we cant multiple it by zero and get rid of it]
 
 
 This also means that we can't even test for NaN in the usual manner 
 
-
-> NaN == NaN
-< false
+    > NaN == NaN
+    < false
 
 
 So, instead we use the function isNaN(): 
@@ -569,16 +568,17 @@ So, instead we use the function isNaN():
 
 
 
-However it is a little wider than perhaps expected. Eg.s:
+However it is a little wider than perhaps expected. Eg.s (using global.isNaN() in node):
 
-isNaN('berry'); // => true
-isNaN(NaN); // => true
-isNaN('true'); // => true
-isNaN('false'); // => true
-isNaN(undefined); // => true
-isNaN(42);  // => false
+    isNaN('berry'); // => true
+    isNaN(NaN); // => true
+    isNaN('true'); // => true
+    isNaN('false'); // => true
+    isNaN(undefined); // => true
+    isNaN(42);  // => false
+    isNaN('42');  // => false
 
-Be careful with strings that look like numbers. isNaN() will covert them to a number and return false. For example '42' will return false. When the argument to the isNaN function is not of type Number, the value is first coerced to a Number. The resulting value is then tested to determine whether it is NaN.
+Be careful with strings that look like numbers. isNaN() will covert them to a number and return false. For example '42' will return false. When the argument to the isNaN function is not of type Number, the value is first coerced to a number type. The resulting value is then tested to determine whether it is NaN.
 
 A better way to test for only NaNs is to use the idea that NaN is never equal to NaN, even the same NaN:
 
@@ -588,7 +588,6 @@ A better way to test for only NaNs is to use the idea that NaN is never equal to
     else {
         console.info('Not a NaN');
     }
-
 
 This is an example of checking if a variable is of number type:
 
@@ -603,10 +602,8 @@ This is an example of checking if a variable is of number type:
 
 
 
-
 Converting Between Types and Coercion 
 --------------------------------------------
-
 
 Coercion is converting a value from one type to another. This happens often in JS because it's a dynamically typed language.
 
@@ -764,7 +761,7 @@ Just like functions in many languages, a JavaScript function is a block of code 
 
 In JavaScript, however, functions are first-class objects (collections of name:value pairs having a hidden link to a prototype object). Anything you can do with other types, including objects (String, Array, Number, etc.) you can do with a function. Functions can be assigned to variables, passed as arguments to other functions (this is the essence of using callback functions), executed within in other functions, created within functions, returned from other functions, and created on the fly (i.e. type it out in full as an argument). This gives JS something that other modern languages do not often have.
 
-Another interesting feature is that, just like an object, you can attached properties and methods to a function. You can even attach other functions. Here we attach a property:
+Another interesting feature is that, just like an object, you can attach properties and methods to a function. You can even attach other functions. Here we attach a property:
 
     function greet() {
         console.log('hi');
@@ -776,7 +773,7 @@ Another interesting feature is that, just like an object, you can attached prope
     console.log(greet.name);  // greet (see below - 'name' is special property)
 
 
-What make functions such a special type of object is that also have some hidden additional properties. One is 'name', which is optional and can remain anonymous, and the other is the 'Code' property. This is where the actual code sits. So the function is an object with properties. The code is just one property. Although what is special about this property is that it is invocable. So function contain executable code, which is invoked with ().
+What make functions such a special type of object is that also have some hidden additional properties. One is 'name', which is optional and can remain anonymous, and the other is the 'Code' property. This is where the actual code sits. So the function is an object with properties. The code is just one property. Although what is special about this property is that it is invocable. So functions contain executable code, which is invoked with ().
 
 Functions are also the primary mechanism of scope (see the scope section).
 
@@ -793,7 +790,7 @@ Recall that expressions return a value and statements do work. For example 'if' 
     }
 
 
-Declared functions are not executed immediately. They are "saved for later use", and will be executed later, when they are invoked (called upon). They are also hoisted; put into memory a head of time and thus available to be invoked before it is declared.
+Declared functions are not executed immediately. They are "saved for later use", and will be executed later, when they are invoked (called upon). They are also hoisted; put into memory ahead of time and thus available to be invoked before it is declared. [This is a result of the 2 parse system used by the engine; definitions are collected in the first pass.]
 
 (Semicolons are used to separate executable JavaScript statements. Since a function declaration is not an executable statement, it is not common to end it with a semicolon).
 
@@ -823,16 +820,16 @@ Passing By Value and By Reference
 Both primitive and complex variables actually store a memory reference. However when you assign a variable holding a primitive value a copy of the value in question is created at a new memory address referenced by the new variable.
 
     // this is the same as passing to a function
-    var a = 1;  // variable a references something like 0x001, which holds '1' in coded binary form
-    var b = a;  // variable b references something like 0x002, which also holds a '1'; value copied
+    var a = 1;  // variable a references some address like 0x001, which holds '1' in coded binary form
+    var b = a;  // variable b references some address like 0x002, which also holds a '1'; value copied
 
 'By value': a copy of a primivite value is placed into another memory location. If you make changes to 'a' it will not affect the value bound to 'b'.
 
-When an complex type is assigned to a variable the variable again holds a memory location for that object. However when we assign one variable to another variable, or pass a complex variable into a function, the new variable gets the same location in memory. No new copy of the object is created at another memory location. 
+When n complex type is assigned to a variable the variable again holds a memory location for that object. However when we assign one variable to another variable, or pass a complex variable into a function, the new variable gets the same location in memory. No new copy of the object is created at another memory location. 
 
-[My take is that both primitive and complex variable hold a reference to a memory address. If the value is primitive the referenced memory address holds the coded binary form of the value. If the value is complex then the referenced memory address hold references to other memory addresses. There will be a sub address for each key value pair. This creates a tree structure in which each branch eventually terminates in a memory location that holds primitive value.]
+[My take is that both primitive and complex variables hold a reference to a memory address. If the value is primitive the referenced memory address holds the coded binary form of the value. If the value is complex then the referenced memory address holds references to other memory addresses. There will be a sub address for each key value pair. This creates a tree structure in which each branch eventually terminates in a memory location that holds primitive value.]
 
-    var a = {key: 'value'}; // variable a references something like 0x001, which holds the object 
+    var a = {key: 'value'}; // variable a references something like 0x001 [at which other memory adresses are stored]
     var b = a;  // variable b hold the same memory address, 0x001; it refers to the same object.
 
 'By reference': all object interact via memory reference. "Mutations" (ie changes) to the value of the object type bound to 'a' will change the object-value bound to/referenced by variable 'b'.
@@ -860,7 +857,7 @@ But this is really the same as using:
 
 Immiediately Invoked Function Expression
 
-None of the previous approaches result in automatic execution of the function. Using these appraoches we need to include something like foo(x). An alternative is an 'immiediately invoked function expression' or IIFE or "Iffy":
+None of the previous approaches result in automatic execution of the function. Using these approaches we need to include something like foo(x). An alternative is an 'immiediately invoked function expression' or IIFE or "Iffy":
 
 
 (function IIFE(){
@@ -1953,7 +1950,7 @@ The effect of an exception is another kind of control flow. Every action that mi
 
 One way to address this is to use fewer side effects. A programming style that computes new values instead of changing existing data helps. If a piece of code stops running in the middle of creating a new value, no one ever sees the half-finished value, and there is no problem.
 
-But that isn’t always practical. So there is another feature that try statements have. They may be followed by a finally block either instead of or in addition to a catch block. A finally block says “no matter what happens, run this code after trying to run the code in the try block.”
+But that isn’t always practical. So there is another feature that try statements have. They may be followed by a finally block either instead of or in addition to a catch block. A finally block says “no matter what happens, run this code after trying to run the code in the try block.” That is, the code in the finally block will run regardless of whether an error has been caught in the catch block.
 
 
     function transfer(from, amount) {
@@ -2022,7 +2019,6 @@ I do not recommend trying to write assertions for every possible kind of bad inp
 
 
 
-
 Importing and Exporting
 -------------------------------------------
 
@@ -2037,7 +2033,7 @@ sum.js :
     }
 
 
-sume.test.js:
+sum.test.js:
 
     const sumModule = require("./sum.js")           //import the module into another document with the require function.
 
@@ -2046,7 +2042,7 @@ sume.test.js:
     })
 
 
-In the egg head reduc videos (no. 6) these three import statements are the same:
+In the egg head redux videos (no. 6) these three import statements are the same:
 
     const { createStore } = Redux;   //es 6 syntax and structure
     //var createStore = Redux.createStore;
