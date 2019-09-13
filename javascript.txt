@@ -7304,6 +7304,48 @@ $('#login').click(function() {
     loginGrtr.setLang($('#lang').val()).HTMLGreeting('#greeting', true).log();
 })
 
+Sets
+---------------------------
+
+You can either just initialise a set or give it an array of values:
+
+	const s = new Set([1, 2, 3, 4])
+
+
+Convert the Set keys into an array:
+	const a = [...s.keys()]
+
+	// or
+
+	const a = [...s.values()]
+
+Iterate the items in a Set:
+
+Use the keys() or values() methods - they are equivalent:
+
+	for (const k of s.keys()) {
+	  console.log(k)
+	}
+
+	for (const k of s.values()) {
+	  console.log(k)
+	}
+The entries() method returns an iterator, which you can use like this:
+
+const i = s.entries()
+console.log(i.next())
+calling i.next() will return each element as a { value, done = false } object until the iterator ends, at which point done is true.
+
+You can also use the forEach() method on the set:
+
+s.forEach(v => console.log(v))
+or you can just use the set in a for..of loop:
+
+for (const k of s) {
+  console.log(k)
+}
+
+
 
 Where to place JavaScript
 -----------------------------
