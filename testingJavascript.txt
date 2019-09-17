@@ -1,0 +1,18 @@
+
+
+Fundamentals of Testing In Javascript
+----------------------------------------------
+
+Say We have a bug in our sum function. To make sure it enver happens again we write a test. Essentially, . A test is code that throws an error when the actual result of something does not match the expected output. 
+
+const sum = (a, b) => a - b;
+
+const result = sum(3, 7);
+const expected = 10
+if (result !== expected){
+    throw new Error(`${result} is not equal to ${expected}`)
+}
+
+The  job of a Javascript testing framework is to make that error message as useful as possible so we can quickly identify what the problem is and fix it.
+
+
