@@ -825,14 +825,14 @@ Both primitive and complex variables actually store a memory reference. However 
 
 'By value': a copy of a primivite value is placed into another memory location. If you make changes to 'a' it will not affect the value bound to 'b'.
 
-When n complex type is assigned to a variable the variable again holds a memory location for that object. However when we assign one variable to another variable, or pass a complex variable into a function, the new variable gets the same location in memory. No new copy of the object is created at another memory location. 
+When a complex type is assigned to a variable the variable again holds a memory location for that object. However when we assign one variable to another variable, or pass a complex variable into a function, the new variable gets the same location in memory. No new copy of the object is created at another memory location. 
 
-[My take is that both primitive and complex variables hold a reference to a memory address. If the value is primitive the referenced memory address holds the coded binary form of the value. If the value is complex then the referenced memory address holds references to other memory addresses. There will be a sub address for each key value pair. This creates a tree structure in which each branch eventually terminates in a memory location that holds primitive value.]
+[My take is that both primitive and complex variables hold a reference to a memory address. If the value is primitive the referenced memory address holds the coded binary form of the value. Memory address is just another type that is coded/decoded by the engine. If the value is complex then the referenced memory address holds references to other memory addresses. There will be a sub address for each key value pair. This creates a tree structure in which each branch eventually terminates in a memory location that holds primitive value.]
 
     var a = {key: 'value'}; // variable a references something like 0x001 [at which other memory adresses are stored]
     var b = a;  // variable b hold the same memory address, 0x001; it refers to the same object.
 
-'By reference': all object interact via memory reference. "Mutations" (ie changes) to the value of the object type bound to 'a' will change the object-value bound to/referenced by variable 'b'.
+'By reference': all object interact via memory reference. "Mutations" (i.e. changes) to the value of the object type bound to 'a' will change the object-value bound to/referenced by variable 'b'.
 
 (note: something is 'immutable' if it cannot be changed)
 
@@ -879,25 +879,22 @@ One advantage if IIFE is that internal variables will not affect the surrounding
     
     console.log( a );       // 42
 
+[This works because a separate execution contxt, with it's own variables, has been creatd for the IIFE. See below]
+
 Using a function expression, IIFEs can also have return values:
 
-    var x = (function IIFE(){
+    var x = (function() {   // Note that this IIFE is anonymous
         return 42;
     })();
     
     x;  // 42
 
-That is, we create a function object, and the next part of code to be executed is (), that then invokes the function.
-
-The round brackets are very helpful. They trick the syntax parser. Normally, when the parser reads the 'function' keyword as the first word in a statement, then it expects a normal function statement (ie declaration), not an evaluation. Round parentheses relates to expression evaluation: 
-
-    (function(){ return 42;}())  // Note that this IIFE is anonymous, and you can invoke inside ()
 
 Arguments can also be passed into the IIFE function:
 
 (function (a, b) {return a * b})(2,2);  // 4
 
-As an aside we need to know about the global execution context. Here 'globalg roughly means 'not inside a function'. This special context is something created by the JS engine that wraps all your code, and it is created with a global object and a special variable called 'this'. Even if you have an emtpy file with no code these two entities will exist. Also, in the global context, 'this' refers to the global object, which is called 'window' in a browser. Any, any variables or functions that you create outside of any function are attached to this global object as properties of that object.
+As an aside we need to know about the global execution context. Here 'global' roughly means 'not inside a function'. This special context is something created by the JS engine that wraps all your code, and it is created with a global object and a special variable called 'this'. Even if you have an emtpy file with no code these two entities will exist. Also, in the global context, 'this' refers to the global object, which is called 'window' in a browser [try logging out this in an otherwise empty file]. Any variables or functions that you create outside of any function are attached to this global object as properties of that object.
 
 Execution contexts are also created with a link to an outer environment. For the global execution context this will be null.
 
@@ -914,7 +911,7 @@ IIFEs help create safe code. When the global execution context is being created 
     // 'Hola John'
     // 'hello'
 
-Both greetings exist but in separate variable environemnts in separate execution contexts. If we had named the function greeting and called it then an error would result. This can become more of an issue when a webpage imports several scripts. Generally IIFEs are used in many libraies (with entire files being wrapped in '()') to prevent conflicts.
+Both greetings exist but in separate variable environments in separate execution contexts. If we had named the function greeting and called it then an error would result. This can become more of an issue when a webpage imports several scripts. Generally IIFEs are used in many libraies (with entire files being wrapped in '()') to prevent conflicts.
 
 If you do want to interact with the global object you can just pass it into your function:
 
@@ -1048,16 +1045,13 @@ or we can pull the standard getElementById out of the function:
 
 One powerful JavaScript feature is assigning an entire function (ie. not just a function return value) to a function variable:
 
-
     var foodDemand = function(food){
         console.log("I want to eat " + food);
     }
 
-
     function foodDemand2(food) {
             console.log("I too want to eat " + food);
     }
-
 
     foodDemand = foodDemand2;
 
@@ -1069,14 +1063,11 @@ One powerful JavaScript feature is assigning an entire function (ie. not just a 
 
     if (mysteryFunction == foodDemand2) {
         console.log("They are the same");
-    };                                       // returns "They are the same" [same reference then, so the same object, see next few lines]
-
-
+    };                                       // returns "They are the same"
 
 
 
 Pure Functions:
-
 
 Pure functions are affected soly by the values of their arguments.  Pure functions also do not have any observable side affects like network or database calls [see more below somewhere, I think, for side effects]. Pure functions just calculate a new value. You can be confident that if whenever a pure function is called with the same set of arguments it will always return the same value. They are predictable.
 
@@ -1158,7 +1149,7 @@ The only other standard property of arguments is callee. This always refers to t
 
     myfunc(1, 2, 3);
 
-This construct is very useful and gives javascript functions flexibility. But, there is an important gotcha. While the arguments object looks like an arra, which a length property and array like indexing, it is not actually an array. It does not have Array in it's prototype chain and it does not respond to any array methods, e.g. arguments.sort() raises a TypeError. Instead you need to copy the values into a true array first. An easy approach is a for-loop:
+This construct is very useful and gives javascript functions flexibility. But there is an important gotcha. While the arguments object looks like an arra, which a length property and array like indexing, it is not actually an array. It does not have Array in it's prototype chain and it does not respond to any array methods, e.g. arguments.sort() raises a TypeError. Instead you need to copy the values into a true array first. An easy approach is a for-loop:
 
     let args = [];
 
@@ -1178,10 +1169,7 @@ In ECMA 6 it is easier with a special 'from' method:
 
 
 
-
-
 CallBack Functions (see also Closures)
-
 
 Callback functions are derived from a programming paradigm known as functional programming. At a fundamental level, functional programming specifies the use of functions as arguments. A callback function is a function that is passed to another function. A higher-order function is a function that can take another function as an argument, or that returns a function as a result.
 
@@ -1224,12 +1212,12 @@ We can use named or anonymous functions as callbacks. Here is an example with a 
         }
     }
     
-    // A function that takes two parameters, the last one a callback function
+Hera a function takes two parameters, the last one a callback function
     function getInput(options, callback) {
         callback (options);
     }
     
-When we call the getInput function, we pass logStuff as a parameter. So logStuff will be the function that will called back (or executed) inside the getInput function
+When we call the getInput function, we pass logStuff as a parameter. So logStuff will be the function that will b called back (or executed) inside the getInput function
     
     getInput ({name:"Rich", speciality:"JavaScript"}, logStuff);
     //  name: Rich
@@ -1255,9 +1243,6 @@ Can be instead written like this:
       };
     };
 
-
-One way to now call it:
-
     var greetHello = greetCurried("Hello");
     greetHello("Heidi"); //"Hello, Heidi"
     greetHello("Eddie"); //"Hello, Eddie"
@@ -1270,22 +1255,7 @@ But we can also just call it this way:
 
 There can be multiple levels of nested functions, and thus more than two sets of parenthesis.
 
-[so this is an anonymous way of doing closures.]
-
-
-
-
-Self-Invoking Functions (see also IIFE above for more details):
-
-
-Function expressions can be made "self-invoking", i.e. they are invoked (started) automatically, without being called.
-
-Add parentheses around the function to indicate that it is a function expression:
-
-    (function () {
-        var x = "Hello!!";
-        console.log(x)         //Console: Hello!!
-    })();
+[so currying is an anonymous way of doing closures.]
 
 
 
@@ -1451,9 +1421,9 @@ Arrow function example:
      
     a2.log() // Window {postMessage: ƒ, blur: ƒ, focus: ƒ, close: ƒ, frames: Window, …}
 
-Arrow functions 'don't have their own 'this'. Instead they retain the 'this' value of the enclosing lexical context. Arrow functions follow the normal variable lookup rules. So while searching for this which is not present in current scope they end up finding this from its enclosing scope. 
+Arrow functions 'don't have their own 'this'. Instead they retain the 'this' value of the enclosing lexical context [at the line where the invocation occurs]. Arrow functions follow the normal variable lookup rules. So while searching for this which is not present in current scope they end up finding this from its enclosing scope. 
 
-So, in this example the arrow function's execution context is created when it is called. However because we have an arrow funciton 'this' has not been assigned. So the scope chain, found by the surround lexical context, is followed. Here, because we are not inside a function, the surrounding lexical context, which is the next step in the scope chain, is the global context. As we know, another way of thinking about global is code 'not inside a function'. Variables and functions that are not inside a function are automatically attached to the global object.​ And in this case, the varibale of type object, a2, is not inside a function. It must be in the global context. That is, `a2.log()`, the arrow function, lexically sits inside the global execution context. 
+So, in this example the arrow function's execution context is created when it is called. However because we have an arrow funciton 'this' has not been assigned. So the scope chain, found by the surround lexical context, is followed. Here, because we are not inside a function, the surrounding lexical context, which is the next step in the scope chain, is the global context [at the moment the invocation occurs / the execution context is set up]. That is, `a2.log()`, our the arrow function, lexically sits inside the global execution context. 
 
 (Arrow functions also do not have their own arguments object. Thus, arguments is simply a reference to the arguments of the enclosing scope).
 
@@ -1528,7 +1498,6 @@ Note that bind() really means makeCopyBoundTo().
 
 
 4. The fourth way to bind 'this' involves the new keyword. That is, invoking a function constructor. It may appear that you are creating a new function, but since JavaScript functions are objects you actually create a new object.
-
 
     // This is a function constructor:
     function myFunction(arg1, arg2) {
