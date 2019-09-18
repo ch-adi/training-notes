@@ -86,9 +86,69 @@ The answer is to add an await to our test function. We need to wait for the call
     
     > node --require ./setup-globals.js lessons/globals.js
  
-   
+ 
+ 
+Static Analysis Testing
+--------------------------------------------
+
+Static analysis involves no dynamic execution of the software under test and can detect possible defects in an early stage, before running the program. Static analysis can be done by a machine to automatically “walk through” the source code and detect noncomplying rules. Static analysis can also be performed by a person who would review the code to ensure proper coding standards and conventions are used to construct the program. This is often called Code Review.
+
+Quality attributes that can be the focus of static analysis:
+ - Reliability
+ - Maintainability  (also inlcludes comments)
+ - Testability  (are there tests?)
+ - Re-usability
+ - Portability
+ - Efficiency
+ 
+Once tool is eslint. You can set up rules in .eslintrc
+
+    {
+      "parserOptions": {
+        "ecmaVersion": "2018"
+      },
+       "extends": [
+        "eslint:recommended"    // automatically use the reccomended set of rules
+      ],
+      "rules": {
+        "valid-typeof": "error" // will break the build. Can use "warn" instead. Or, can use "off" to disable the rule.
+      }
+    }
+
+So you don't have to run $ npm eslint src all the time you can add eslint to your package.json:
+
+    "scripts": {
+        "lint": "eslint src"
+    },
+    
+You can also just add an eslint extension to your code editor. Since you don't have to run anything you get a faster feedback loop.
+
+
+Code formatting tools, like perttier are also available.Such tools limit arguments with others and tidy the code.
+
+    $ npx prettier src/example.js  // just see the result
+    $ npx prettier --write src/example.js  // write the result to the file, or:
+    
+    "scripts": {
+        "lint": "eslint src",
+        "format": "prettier --write \"**/*.+(js|jsx|json|yml|yaml|css|less|scss|ts|tsx|md|mdx|graphql|vue)\""
+    },
+    
+There may also be some code editor support for prettier. If so you should enable format on save in the editor's settings. You can also change prettier's setting with a .prettierrc file. Go to https://prettier.io/playground/ to try out and generate some config options. A .prettierignore can be used to ignore some other file types like node modules.
+
+If there are conflicts between prettier and eslint then try this module: npm install --save-dev eslint-config-prettier, cnad update extends in .eslintrc:
+
+  "extends": [
+    "eslint:recommended", "eslint-config-prettier"
+  ],
+  
+ 
+
+
+
 
     
+ 
  
     
   
