@@ -142,13 +142,107 @@ If there are conflicts between prettier and eslint then try this module: npm ins
     "eslint:recommended", "eslint-config-prettier"
   ],
   
+ [this example conintinues into the node scripts section of the node training file]
  
+ 
+ 
+ Mocking
+ ------------------------------------------------
+When running unit tests, you don’t want to actually make network requests or charge real credit cards. This can easily get slow and flaky. Instead we want some aspects of the code such as inputs into a function under test to be deterministic. 
 
+One way to do this is 'monkey-patching'. We import some functionality but assign some deterministic replacement. Then we properly dispose of that replacement.
 
+    const originalGetWinner = utils.getWinner    // we will overwrite getWinner, which returns a random result used within thumbWar()
+    utils.getWinner = (p1, p2) => p1            //  p1 will always be the return value used within thumbWar().
 
+    const winner = thumbWar('Kent C. Dodds', 'Ken Wheeler')
+    assert.strictEqual(winner, 'Kent C. Dodds')    // if the rest of thumbWar is working then p1 should now always be the result
 
+    utils.getWinner = originalGetWinner   // properly dispose of our version of getWinner.
     
- 
- 
-    
+
+In this case it would also be great to test how getWinner is being called. For example, what if it was not called with the correct arguments. Say only p1 and not p2. The test would still pass but the implementation would be wrong.
+        
+     test('returns winner', () => {
+      const originalGetWinner = utils.getWinner
+      utils.getWinner = jest.fn((p1, p2) => p1)
+
+      const winner = thumbWar('Kent C. Dodds', 'Ken Wheeler')
+      expect(winner).toBe('Kent C. Dodds)
+      expect(utils.getWinner).toHaveBeenCalledTimes(2)
+      expect(utils.getWinner).toHaveBeenCalledWith('Kent C. Dodds', 'Ken Wheeler')  // picks up the implementation break
+    })
+
+
+Or if we expect the mocked function to have been called with different arguments:
+
+  expect(utils.getWinner).toHaveBeenNthCalledWith(1, 'Kent C. Dodds', 'Ken Wheeler')  // arguments for first call - '1'
+  expect(utils.getWinner).toHaveBeenNthCalledWith(2, 'Kent C. Dodds', 'Henry Jones')
   
+Inspecting the mocked function object actually allows us to replace many of these expectations. For example, you can log it out and see the calls:
+
+    console.log(utils.getWinner.mock.calls); // see and array of 'calls'
+    
+ Now all we need to test is this:
+ 
+     expect(utils.getWinner.mock.calls).toEqual([
+      [ 'Kent C. Dodds', 'Ken Wheeler' ],
+      [ 'Kent C. Dodds', 'Ken Wheeler' ]
+    ]);
+    
+That is, we know there have been two calls and what the arguments for those calls have been.
+
+
+We could make our own mocking function to get the same result:
+
+    function fn(impl) {
+      const mockFn = (...args) => {
+        mockFn.mock.calls.push(args)
+        return impl(...args)
+      }
+      mockFn.mock = {calls: []}
+      return mockFn
+    }
+
+    assert.strictEqual(winner, 'Kent C. Dodds')
+    assert.deepStrictEqual(utils.getWinner.mock.calls, [
+      [ 'Kent C. Dodds', 'Ken Wheeler' ],
+      [ 'Kent C. Dodds', 'Ken Wheeler' ]
+    ])
+        
+This fn function accepts an implementation and returns a function that calls that implementation with all of those arguments.
+
+It also keeps track of all the arguments that it's called with so that we can assert how that function is called, allowing us to catch issues in our integration with the getWinner function.
+ 
+Having to dispose of our version of the mocked function can be tiresome. The workout is to use spyOn and restore. spyOn takes an object and a method:
+
+    test('returns winner', () => {
+      jest.spyOn(utils, 'getWinner')   // instead of `const originalGetWinner = utils.getWinner`
+      utils.getWinner.mockImplementation((p1, p2) => p2) // replaces utils.getWinner = jest.fn((p1, p2) => p2)
+
+      ...
+
+      // cleanup
+      utils.getWinner.mockRestore()  // instead of `utils.getWinner = originalGetWinner`
+    
+ To make our own version we first need a mock function factory that takes a default empty function:
+ 
+    function fn(impl = () => {}) {
+      const mockFn = (...args) => {
+        mockFn.mock.calls.push(args)
+        return impl(...args)
+      }
+      mockFn.mock = {calls: []}
+      mockFn.mockImplementation = newImpl => (impl = newImpl)  // this allows our tests to be deterministic
+      return mockFn
+    }
+
+And spyOn:
+
+    function spyOn(obj, prop) {
+      const originalValue = obj[prop]
+      obj[prop] = fn()
+      obj[prop].mockRestore = () => (obj[prop] = originalValue)
+    }
+    
+SpyOn is resonisble for tracking the original value. Then it provides a mockRestore function, which we can use to restore the originalValue to that object.
