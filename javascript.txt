@@ -761,6 +761,48 @@ Just like functions in many languages, a JavaScript function is a block of code 
 
 In JavaScript, however, functions are first-class objects (collections of name:value pairs having a hidden link to a prototype object). Anything you can do with other types, including objects (String, Array, Number, etc.) you can do with a function. Functions can be assigned to variables, passed as arguments to other functions (this is the essence of using callback functions), executed within in other functions, created within functions, returned from other functions, and created on the fly (i.e. type it out in full as an argument). This gives JS something that other modern languages do not often have.
 
+One way to call a function is within the script tags:
+
+    <p id="demo"></p>
+    <script>
+    function myFunction() {
+        document.getElementById("demo").innerHTML = "Hello World!";
+    }
+    myFunction(); // call the function here
+    </script>
+
+or we can pull the standard getElementById out of the function:
+
+    <script>
+    function myFunction(name) {
+        return "Hello " + name;
+    }
+    document.getElementById("demo").innerHTML = myFunction("John");
+    </script>
+
+One powerful JavaScript feature is assigning an entire function (ie. not just a function return value) to a function variable:
+
+    var foodDemand = function(food){
+        console.log("I want to eat " + food);
+    }
+
+    function foodDemand2(food) {
+            console.log("I too want to eat " + food);
+    }
+
+    foodDemand = foodDemand2;
+
+    foodDemand("hot dogs");   //we get the output from foodDemand2
+
+    var mysteryFunction = foodDemand;
+    mysteryFunction("dogs");     //again we get the output expected from foodDemand2
+
+
+    if (mysteryFunction == foodDemand2) {
+        console.log("They are the same");
+    };                                       // returns "They are the same"
+
+
 Another interesting feature is that, just like an object, you can attach properties and methods to a function. You can even attach other functions. Here we attach a property:
 
     function greet() {
@@ -879,7 +921,7 @@ One advantage if IIFE is that internal variables will not affect the surrounding
     
     console.log( a );       // 42
 
-[This works because a separate execution contxt, with it's own variables, has been creatd for the IIFE. See below]
+[This works because a separate execution context, with it's own variables, has been created for the IIFE. See below]
 
 Using a function expression, IIFEs can also have return values:
 
@@ -944,7 +986,6 @@ function myFunction(x, y) {
 
 In ES6 you can define a default argument if the argument is 'undefined'. Here is part of a function that first checks that the argument is not undefined:
 
-
     function counter (state, action) {
     	if(typeof state === 'undefined') {
     		return 0;
@@ -959,12 +1000,12 @@ Or we could use this tidier pattern:
     // OR only ever evaluates (and coerces) the second operand if the first operand coerces false. 
     // It then returns the uncoerced version of which every operand it was up to. So this is
     // actually wider than above, since it catches anything that coerces to false. 
-        state = state || 0  
+        state = state || 0;
         
         ...now that it's not undefined do some stuff...
     }
 
-Replace it with:
+Or replace that with:
 
     function counter (state = 0, action) {
 
@@ -1015,55 +1056,12 @@ In the next example we see that the function produces a new string from an exisi
       return string + '!!!!'
     }
 
-The expression string + '!!!!' returns a new string and what ever variable we passed stays the same (since we never updated it to anything else with = ).
-
 Now, if you took the return line out of this function then any variable assigned to its output would hold "undefined" eg:
 
     function makeMoreExciting(string) {};
     var sent = makeMoreExciting("String");
     console.log(sent); //undefined
 
-
-One way to call a function is within the script tags:
-
-    <p id="demo"></p>
-    <script>
-    function myFunction() {
-        document.getElementById("demo").innerHTML = "Hello World!";
-    }
-    myFunction(); // call the function here
-    </script>
-
-or we can pull the standard getElementById out of the function:
-
-    <script>
-    function myFunction(name) {
-        return "Hello " + name;
-    }
-    document.getElementById("demo").innerHTML = myFunction("John");
-    </script>
-
-One powerful JavaScript feature is assigning an entire function (ie. not just a function return value) to a function variable:
-
-    var foodDemand = function(food){
-        console.log("I want to eat " + food);
-    }
-
-    function foodDemand2(food) {
-            console.log("I too want to eat " + food);
-    }
-
-    foodDemand = foodDemand2;
-
-    foodDemand("hot dogs");   //we get the output from foodDemand2
-
-    var mysteryFunction = foodDemand;
-    mysteryFunction("dogs");     //again we get the output expected from foodDemand2
-
-
-    if (mysteryFunction == foodDemand2) {
-        console.log("They are the same");
-    };                                       // returns "They are the same"
 
 
 
@@ -1190,8 +1188,6 @@ In the next example the function fn is passed as a callback to the setTimeout fu
     function fn() { alert("Hello, World"); }
     window.setTimeout(fn, 5000);
 
-We can pass functions around like variables and return them in functions and use them in other functions. When we pass a callback function as an argument to another function, we are only passing the function definition. We are not executing the function in the parameter. In other words, we aren’t passing the function with the trailing pair of executing parenthesis () like we do when we are executing a function.
-
 And since the containing function has the callback function in its parameter as a function definition, it can execute the callback anytime. Even without a name, it can still be accessed later via the arguments object by the containing function.
 
 When we pass a callback function as an argument to another function, the callback is executed at some point inside the containing function’s body just as if the callback were defined in the containing function. The callback function can access the containing functions’ variables, and even the variables from the global scope. This means the callback is a closure [see closures - function plus the variables locked in from the surrounding scope when the outer function was executed].
@@ -1212,12 +1208,12 @@ We can use named or anonymous functions as callbacks. Here is an example with a 
         }
     }
     
-Hera a function takes two parameters, the last one a callback function
+Here a function takes two parameters, the last one a callback function
     function getInput(options, callback) {
         callback (options);
     }
     
-When we call the getInput function, we pass logStuff as a parameter. So logStuff will be the function that will b called back (or executed) inside the getInput function
+When we call the getInput function, we pass logStuff as a parameter. So logStuff will be the function that will be called back (or executed) inside the getInput function
     
     getInput ({name:"Rich", speciality:"JavaScript"}, logStuff);
     //  name: Rich
@@ -1287,14 +1283,14 @@ So, the value of 'this' depends upon how a function is called. That is, how the 
         var a = "hello world";
         console.log(window.a); // "hello world"   // window.a is the same thing as a
 
-    The engine supplies a link to the outer environment so that if a variable does not exist it can look up the scope chain to find that variable. In this way, a non-global execution context has several features: a 'this', a link to the outer environment, a variable environment and 'arguments'. 'Arguments' hold all those values you have passed to the function.
+    The engine supplies a link to the outer environment so that if a variable does not exist it can look up the scope chain to find that variable. In this way, a non-global execution context has several features: a 'this', a link to the outer environment, a variable environment and 'arguments'. 'Arguments' holds all those values you have passed to the function.
 
     A non-global execution content is created when a function is invoked/called. These execution contexts stack on top of each other (it's actually called the execution stack), so that whichever is on top is the currently running context. Code is executed line by line and if another function invocation is reached, then a new context is generated and sits on the top of the stack. When all the code in the top context has been executed, then that context is popped off the stack.
 }
 
 In most cases, the value of 'this' is determined by how a function is invoked. It can't be set by assignment during execution ('this' is not a variable. It is a keyword), and it may be different each time the function is called. It also has some differences between strict mode and non-strict mode. ES5 introduced the bind method to set the value of a function's this regardless of how it's called, and ECMAScript 2015 introduced arrow functions (see below) whose 'this' is lexically scoped; it is set to the 'this' value of the lexically enclosing execution context.
 
-JavaScript functions can be invoked in 4 different ways. Each method differs in how 'this' is initialized. The code in a function is not executed when the function is defined. It is executed when the function is invoked. Some people use the term "call a function" instead of "invoke a function". It is also quite common to say "call upon a function", "start a function", or "execute a function". Here, we will use invoke, because a JavaScript function can be invoked without being called (a bit of a non-distinction perhaps. But, when you call a function, you are directly telling it to run. When you invoke a function, you are letting something run it. eg myFunc() is an invocation and call, whereas myObj.myFunc() is only a call ????).
+JavaScript functions can be invoked in 4 different ways. Each method differs in how 'this' is initialized. The code in a function is not executed when the function is defined. It is executed when the function is invoked. Some people use the term "call a function" instead of "invoke a function". It is also quite common to say "call upon a function", "start a function", or "execute a function". 
 
 1. In the global execution context (outside of any function), 'this' refers to the global object, whether in strict mode or not:
 
@@ -1305,6 +1301,16 @@ JavaScript functions can be invoked in 4 different ways. Each method differs in 
 
     this.a = 37;
     console.log(window.a); // 37
+
+    function logThis() {
+        console.log(this.a); // 37
+    }
+
+    logThis();  // 37 // [essentialy logThis() is a property of the global object:
+    window.logThis(); // 37  // So this case is no different from invoking a method (option 2) ]
+
+    [so are all functions methods? - if so cases 1 and 2 are the same. But it may be that since an object
+    has not been explcitly provided then lexical scoping is being used, just like the arrow function case]
 
 
 2. Inside a function, the value of this depends on how the function is invoked.   
@@ -1355,7 +1361,7 @@ We could also change back to the global window by creating a new global variable
 
     window.firstName = "comp";
     window.lastName = "gangsta";
-    var globalFunc = myObject.fullName;
+    var globalFunc = myObject.fullName;  // pass by reference
     globalFunc();     // "comp gangsta"
 
 'this' is now being called in another execution context -  the global execution context. [i.e. we can type window.globalFunc(); which is what is implicitly happening here.] The usual situation in this case is that the global object will have no keys like lastName or fullname, and so you will get 'undefined'. This could be a source of bugs.
@@ -1373,7 +1379,7 @@ We could also change back to the global window by creating a new global variable
 
     talkFunction()  //undefined
 
-(aside: this state of affairs is due to the clash between functional programming aspect of Javascript and it object orientated past. Javascript was originally a mixture of Java (object orientated) and Scheme (?) (functional). Object orientated languages use concepts like 'this', but functional languages, in which a function can be assigned to a variable, do not. )
+(aside: this state of affairs is due to the clash between functional programming aspect of Javascript and its object orientated past. Javascript was originally a mixture of Java (object orientated) and Scheme (?) (functional). Object orientated languages use concepts like 'this', but functional languages, in which a function can be assigned to a variable, do not. )
 
 Here is a more complete example:
 
