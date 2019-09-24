@@ -1181,8 +1181,73 @@ Lastly, if you want to update your dependencies, subject to a caret or tilde, th
     $ npm update
 
 
+Node scripts
 
+package.json:
 
+  "scripts": {
+      "lint": "eslint src",
+      "flow": "flow",
+      "format": "npm run prettier -- --write",
+      "prettier": "prettier \"**/*.+(js|jsx|json|yml|yaml|css|less|scss|ts|tsx|md|graphql|mdx)\"",
+      "validate": "npm run lint && npm run prettier -- --list-different"
+  },
+  
+In validate we see double ampersand, which means that the lint command is run and then followed by the prettier command. We also see that the prettier command is run with different flags. The format command passes in a write command (-- --write), which would make the prettier command look like:
+
+  "prettier": "prettier --write \"**/*.+(js|jsx|json|yml|yaml|css|less|scss|ts|tsx|md|graphql|mdx)\"",  
+
+Wheras the validate command passes in a different flag, (--list-different).
+
+Also note that with some packages like flow, which type cehcks needs a pre compiler directive or 'pragma' on each file to be checked. For flow this is //flow at the top of the file.
+
+Tip for eslint. The syntax that other packages use, like flow, may not be compatabile with eslint. Try adding in a parser:
+
+  $ npm install --save-dev babel-eslint
+  
+.eslintrc: 
+ 
+ {
+    "parser": "babel-eslint",
+    
+ It is also possible to use special git hooks within npm scripts. Say you wanted to automaticlly run some static testing (like prettier) before committing. 
+ 
+ $ npm install --save-dev husky
+ 
+If you now inspect your git directory there's a hooks directory. These git hooks inlcude a pre-commit file. Now we just add a precommit script in package.json:
+
+  "scripts": {
+      "lint": "eslint src",
+      "format": "npm run prettier -- --write",
+      "prettier": "prettier \"**/*.+(js|jsx|json|yml|yaml|css|less|scss|ts|tsx|md|graphql|mdx)\"",
+      "validate": "npm run lint && npm run prettier -- --list-different && npm run flow",
+      "precommit": "lint-staged && npm run flow"
+  },
+
+This will run husky's precommit script. prettier or lint throw an error then your commit will fail (can be overwidden with --no-verify). note; we used lint-staged here so that we only lint check changed files and not the entire project. This is its setup:
+
+  $ npm install --save-dev lint-staged
+  
+.lintstagedrc:
+  
+  {
+    "linters": {
+      "*.js": [                           // will match for any files the match the glob *.js
+        "eslint"
+      ],
+      "**/*.+(js|jsx|json|yml|yaml|css|less|scss|ts|tsx|md|graphql|mdx)": [
+        "prettier --write",
+        "git add"                     // once prettier has run then run git add
+      ]
+    }
+  }
+
+ 
+ Without lint-staged the precommit script would have just been:
+ 
+  "precommit": "npm run validate"
+ 
+ 
 
 
 Express
