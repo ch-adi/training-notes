@@ -158,7 +158,7 @@ One way to do this is 'monkey-patching'. We import some functionality but assign
     const winner = thumbWar('Kent C. Dodds', 'Ken Wheeler')
     assert.strictEqual(winner, 'Kent C. Dodds')    // if the rest of thumbWar is working then p1 should now always be the result
 
-    utils.getWinner = originalGetWinner   // properly dispose of our version of getWinner.
+    utils.getWinner = originalGetWinner   // properly dispose of our version of getWinner i.e. fix up the original object.
     
 
 In this case it would also be great to test how getWinner is being called. For example, what if it was not called with the correct arguments. Say only p1 and not p2. The test would still pass but the implementation would be wrong.
@@ -190,7 +190,7 @@ Inspecting the mocked function object actually allows us to replace many of thes
       [ 'Kent C. Dodds', 'Ken Wheeler' ]
     ]);
     
-That is, we know there have been two calls and what the arguments for those calls have been.
+That is, we know there have been two calls and what the arguments for those calls have been, with just one assertion.
 
 
 We could make our own mocking function to get the same result:
@@ -203,6 +203,9 @@ We could make our own mocking function to get the same result:
       mockFn.mock = {calls: []}
       return mockFn
     }
+    
+    const originalGetWinner = utils.getWinner
+    utils.getWinner = fn((p1, p2) => p1)
 
     assert.strictEqual(winner, 'Kent C. Dodds')
     assert.deepStrictEqual(utils.getWinner.mock.calls, [
@@ -214,7 +217,7 @@ This fn function accepts an implementation and returns a function that calls tha
 
 It also keeps track of all the arguments that it's called with so that we can assert how that function is called, allowing us to catch issues in our integration with the getWinner function.
  
-Having to dispose of our version of the mocked function can be tiresome. The workout is to use spyOn and restore. spyOn takes an object and a method:
+Having to dispose of our version of the mocked function can be tiresome. The workaround is to use spyOn and restore. spyOn takes an object and a method:
 
     test('returns winner', () => {
       jest.spyOn(utils, 'getWinner')   // instead of `const originalGetWinner = utils.getWinner`
@@ -225,7 +228,8 @@ Having to dispose of our version of the mocked function can be tiresome. The wor
       // cleanup
       utils.getWinner.mockRestore()  // instead of `utils.getWinner = originalGetWinner`
     
- To make our own version we first need a mock function factory that takes a default empty function:
+    
+ To make our own version we first need to update our mock function factory with a mockImplementation method:
  
     function fn(impl = () => {}) {
       const mockFn = (...args) => {
@@ -245,4 +249,85 @@ And spyOn:
       obj[prop].mockRestore = () => (obj[prop] = originalValue)
     }
     
-SpyOn is resonisble for tracking the original value. Then it provides a mockRestore function, which we can use to restore the originalValue to that object.
+So, SpyOn is resonisble for tracking the original value and then restoring the originalValue.
+
+
+So far our monkey-patching has been working because we have been using common JS. It does not work with es6 modules. However, jest allows you to mock an entire module with the jest.mock API. The first argument is the module being mocked, realtive to the call to jest.mock. The 2nd argument is a module factory function that will return a mocked version of the module.
+
+    jest.mock('../utils', () => {
+      return {
+        getWinner: jest.fn((p1, p2) => p1)
+      }
+    })
+
+    test('returns winner', () => {
+        // remove spyon and mock implementation
+      const winner = thumbWar('Kent C. Dodds', 'Ken Wheeler')
+      expect(winner).toBe('Kent C. Dodds')
+      expect(utilsMock.getWinner.mock.calls).toEqual([
+        ['Kent C. Dodds', 'Ken Wheeler'],
+        ['Kent C. Dodds', 'Ken Wheeler']
+      ])
+
+      // cleanup
+      utils.getWinner.mockReset() // replace mockRestore with mockReset
+    })
+    
+Also before Jest runs our code, it moves the jest.mock call up to the top of the file to ensure that the mock is in place before any of our modules are loaded. This is useful as other imports are often hoisted to the top of the file.
+    
+If you wanted to implement this yourself you would need the require cache. If you were to log it out you would see an object with many keys:
+
+    console.log(require.cache);
+    
+    { '/Users/kdodds/Developer/js-mocking-fundamentals/node_modules/jest-worker/build/child.js':
+      Module {
+        id: '.',
+        exports: {},
+        parent: null,
+        ...
+      }
+    }
+    
+Let's go ahead and get the utilsPath with require.resolve('../utils'). We'll then say require.cache at the utilsPath equals an object, and this object needs to resemble a module, so we'll say id is utilsPath, the filename is utilsPath, loaded is true, and exports is our mock, so we'll say getWinner is a call to our function with p1, p2 always returning p1. 
+    
+    const utilsPath = require.resolve('../utils')
+    require.cache[utilsPath] = {
+      id: utilsPath,
+      filename: utilsPath,
+      loaded: true,
+      exports: {
+        getWinner: fn((p1, p2) => p1)
+      }
+      
+      // cleanup
+       delete require.cache[utilsPath]
+    }
+ 
+With that, we can change things here a little bit. Let's put fn() up here at the top. We'll get rid of this spyOn function, we don't need that anymore. We'll get rid of our getWinner.mockImplementation call here.
+
+We'll change our cleanup to delete require.cache at that utilsPath. That way any other modules that want to use the utils can do so without having trouble with our module mocking them out.
+
+We could also preload the require.cache with the mock module that we want to have loaded when thumb-war requires the utils module.
+
+    require.cache[utilsPath] = {
+      id: utilsPath,
+      filename: utilsPath,
+      loaded: true,
+      exports: {
+        getWinner: fn((p1, p2) => p1)
+      }
+    }
+
+
+If more than one test will need a mock of a module you can externalise your mock directory. Create a __mocks__ directory next to the file you wish to mock. Inside this directory create a file with the same name as the file to be mocked. 
+
+For example, if we are to mock the getWinner method from the utils directory, the __mocks__/utils will look like:
+
+    module.exports = {
+      getWinner: jest.fn((p1, p2) => p1)
+    }
+
+In our test file we now need this:
+
+    jest.mock('../utils')
+
