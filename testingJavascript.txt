@@ -331,3 +331,145 @@ In our test file we now need this:
 
     jest.mock('../utils')
 
+
+
+Configuring Jest
+-------------------------------------
+
+
+Jest runs in node (via a some binaries in the .bin folder in node modules).
+
+When Jest runs it automatically sets the node environment variable to 'test'. This allows us to change other configurations, such as the webpack config, when we are running tests. So, for example, in somehwere like .babelrc.js we can choose a to load mosules in a way that suits test but not production:
+
+    const isTest = String(process.env.NODE_ENV) === 'test'
+    
+    presets: [
+        ['@babel/preset-env', {modules: isTest ? 'commonjs' : false}],    
+
+
+That's saying, "Hey, Babel preset env. When you come across a module, and if we're in the test environment, I want you to transpile that to commonjs so that it works in Node. Otherwise, we're probably building with webpack, and so, I don't want you to transpile that."
+
+Eventhough Jest is running in node you can still log out 'window'. That is we can run tests in the browser too. Jest is intended to test JavaScript that runs in the browser or in node. This is because of a module called JSDOM. JSDOM will simulate this browser environment. There's a little bit of a performance hit for Jest to set up this JSDOM test environment. If you're just writing code that can run in Node then it's better to tell Jest to run that code in a Node test environment and not set up JSDOM.
+
+You can force a node environment by passing on the argument env=node:
+
+    npm t -- --env=node   // any tests that uses 'window' will fail with a warning now: ReferenceError: window is not defined
+    
+You can also set a node environment in a jest.config.js:
+
+    module.exports = {
+        testEnvironment: 'jest-environment-node',     // 'jest-environment-jsdom' if you do want JSDOM
+    }
+
+Say, when testing react componest with css files, you may get errors around css files imported as modules. Webpack has a loader (called 'style-loader') that handles modules. However in the node environment, node assumes that the imported statement for the css file is referring to a node module. We want to tell Jest that any time it sees a .css import we want it to resolve to some other module. We need a regex expression to map from css to a style mock. jest.config.js:
+
+    module.exports = {
+        testEnvironment: 'jest-environment-jsdom',
+        moduleNameMapper: {
+        '\\.css$': require.resolve('./test/style-mock.js'),
+      }
+    }
+
+A style mock doesn't need to be anything special. We can just say module.exports equals a empty object. style-mock.js:
+
+    module.exports = {}
+    
+Now, however, any tests that look at style wont show much:
+
+    import 'react-testing-library/cleanup-after-each'
+    import React from 'react'
+    import {render} from 'react-testing-library'
+    import AutoScalingText from '../auto-scaling-text'
+
+    test('renders', () => {
+      const {container} = render(<AutoScalingText />)   // get the container from this render
+      console.log(container.innerHTML) 
+    })
+    
+The log displays <div style="transform: scale(1,1);"></div>, but we don't see the className that is associated with the autoscalling text. 
+    
+    $ npm install --save-dev identity-obj-proxy
+    
+  
+      moduleNameMapper: {
+        '\\.module\\.css$': 'identity-obj-proxy',
+        '\\.css$': require.resolve('./test/style-mock.js'),
+      },
+      
+Now we log the property we are trying to access:
+
+    <div class= "autoScalingText" style="transform: scale(1,1);"></div> 
+    
+Again, this is only a generated value because this is CSS modules. However it is a lot more helpful to have something like that there in our output, both when we're debugging and if we want to take a snapshot of this HTML.
+      
+Now, it's important to have these in the right order, because these both will match the module.css files, but we want any module.css to match the identity-obj-proxy instead.    
+    
+    
+Snapshots
+
+Snapshots creates a serialized value of the object we are expecting. In this case we will look at serialising and foratting DOM nodes. 
+ 
+ ( aside: serialization (or serialisation) is the process of translating data structures or object state into a format that can be stored (for example, in a file or memory buffer) or transmitted (for example, across a network connection link) and reconstructed later (possibly in a different computer environment).) 
+ 
+In jest, an object is serialized as a string (and pretty prints it).
+
+    import 'react-testing-library/cleanup-after-each'
+    import React from 'react'
+    import {render} from 'react-testing-library'
+    import CalculatorDisplay from '../calculator-display'
+
+    test('mounts', () => {
+      const {container} = render(<CalculatorDisplay value="0" />)
+      
+      // the value we will end up asserting in this test (checking it out for now)
+      console.log(container.innerHTML)     // logs some HTML but it is untidy.
+    })
+    
+We could actually snapshot container.innerHTML, but the problem with that is any change to any of these attributes would negate the entire snapshot would be harder to read diffs of the snapshot.   
+
+If you only have one child that you're rendering, then it doesn't actually make any sense to snapshot that diff. You could actually snapshot the firstChild which will be the root node of the thing that you're rendering. For us that's this div here.
+
+    calculator-display.js
+    expect(container.firstChild).toMatchSnapshot()
+
+In this way your snapshot would be a little less nested and so easier to read. The resultant snapshots are useful for people readding your commits and finding bugs.
+
+One great feature of Jest snapshots is custom serialzers. And, someone has already done that for us with the emotion package:
+
+    $ npm install --save-dev jest-emotion
+    
+    import {createSerializer} from 'jest-emotion'
+    import * as emotion from 'emotion'
+    
+Then, we'll use the Jest API for adding a snapshot serializer:
+
+    expect.addSnapshotSerializer(createSerializer(emotion))  // allows for a much nicer representation of class names
+    
+There are bunch of different snapshot serializers available on npm.
+
+For example, there is a package called jest-serializer-path that removes absolute paths and normalized paths across all platforms in your Jest snapshots. Many snapshot serializer packages, like this one, actually expose the serializer itself rather than requiring you to create it in code, and for snapshot serializers like that, you can actually edit your Jest configuration and add a snapshotSerializers property with an array of path to packages.
+
+jest.config.js:
+
+    module.exports = {
+      testEnvironment: 'jest-environment-jsdom',
+      moduleNameMapper: {
+        '\\.module\\.css$': 'identity-obj-proxy',
+        '\\.css$': require.resolve('./test/style-mock.js'),
+      },
+      snapshotSerializers: []
+    }
+    
+We have already covered static imports. Now we look at dynamic imports, which are not supported in node. Babel won't transpile dynamic imports to commonjs. 
+
+We need to install a new package that will transpile this to commonjs so that our tests will work. We'll run npm install --save-dev babel-plugin-dynamic-import-node. 
+
+Now, let's go ahead and update our Babel configuration to use this plugin, but we only want to use it when we're running our tests. We want Webpack to take over in production when we're building our application.
+
+.babelrc.j:
+
+    isTest ? 'babel-plugin-dynamic-import-node' : null,
+
+
+
+ 
