@@ -472,4 +472,247 @@ Now, let's go ahead and update our Babel configuration to use this plugin, but w
 
 
 
+Automatically setting up imports before each test.
+
+If the same imports are being used across a number of test files we can ask Jest to import all these modules automatically. This saves a few import lines in each test file.
+
+Throw all reused imports into setup-tests.js:
+
+setup-tests.js
+
+    import 'react-testing-library/cleanup-after-each'
+
+    import {createSerializer} from 'jest-emotion'
+    import * as emotion from 'emotion'
+
+    expect.addSnapshotSerializer(createSerializer(emotion))
+
+
+In jest.config.js there are a couple of available hooks:
+
+
+module.exports = {
+  testEnvironment: 'jest-environment-jsdom',
+  moduleNameMapper: {
+    '\\.module\\.css$': 'identity-obj-proxy',
+    '\\.css$': require.resolve('./test/style-mock.js'),
+  },
+  // setupFiles: [],     // before Jest is loaded -  not so useful for us
+  setupTestFrameworkScriptFile: require.resolve('./test/setup-tests.js'),  // after Jest is loaded
+}
+
+
+
+Custom Module Resolution:
+
+Webpack’s resolve.modules configuration is a great way to make common application utilities easily accessible throughout your application. However, Jest does not use this configeration
+
+
+The way our CalculatorDisplay is implemented, the calculator-display is imported. It's asynchronously loaded.
+
+calculator.js:
+
+    const CalculatorDisplay = loadable({
+      loader: () => import('calculator-display').then(mod => mod.default),
+      loading: () => <div style={{height: 120}}>Loading display...</div>,
+    })
+
+src/tests was like this:
+
+test('renders', () => {
+    const {container, debug} = render(<Calculator />)   // we see 'Loading Display...'
+    debug(container)
+})
+
+But now we want to load it async so that the calculator display has time to display
+
+    import loadable from 'react-loadable'
+
+    test('renders', async () => {      // is no async with react-loadable imported
+        await loadable.preloadAll()
+        const {container, debug} = render(<Calculator />)  
+        debug(container)
+    }
+
+However this will break with this error: Cannot find module 'calculator-display' from 'calculator.js'
+
+The reason for this is because here, in calculator.js we're importing calculator-display as if it were a node module, but it's not a node module. It actually lives in the shared directory as calculator-display. And while webpack can resolve this module Jest is not configured to do so.
+
+This is the webpack config:
+
+    resolve: {
+        modules: ['node_modules', path.join(__dirname, 'src'), 'shared']
+    }
+
+While we apply to jest.config.js
+
+    const path = require('path')   // new import needed for moduleDirectories
+
+    module.exports = {
+      testEnvironment: 'jest-environment-jsdom',
+      moduleDirectories: ['node_modules', path.join(__dirname, 'src'), 'shared'],
+      moduleNameMapper: {
+        '\\.module\\.css$': 'identity-obj-proxy',
+        '\\.css$': require.resolve('./test/style-mock.js'),
+      },
+      setupTestFrameworkScriptFile: require.resolve('./test/setup-tests.js'),
+    }
+
+
+
+
+Support a Test Utilities File with Jest moduleDirectories
+
+Every large testbase has common utilities that make testing easier to accomplish. Whether that be a custom render function or a way to generate random data. 
+
+In this example, we now have a provider that supplies some styling based on theme. To make our test pass we need to remember to wrap up a component with the theme provider:
+
+    import CalculatorDisplay from '../calculator-display'
+    import {dark} from '../../themes'
+
+    test('mounts', ( => {
+      const {container} = render(
+        <ThemeProvider theme={dark}>
+          <CalculatorDisplay value="0" />
+        </ThemeProvider>
+      )
+      expect(container.firstChild).toMatchSnapshot
+    })
+
+ This same thing would happen if we're using the Redux Provider, or React Router Provider, or some internationalization provider. It will be nice, if this render method could just render all the providers that we're really care about automatically for us. 
  
+ Let's say we have a utils file that automatically returns a wrapped component:
+ 
+test/calculator-test-utils.js:
+
+    import React from 'react'
+    import {render} from 'react-testing-library'
+    import {ThemeProvider} from 'emotion-theming'
+    import {dark} from '../src/themes'
+
+    function renderWithProviders(ui, options) {
+      return render(<ThemeProvider theme={dark}>{ui}</ThemeProvider>, options)
+    }
+
+    export * from 'react-testing-library'
+    export {renderWithProviders as render}   // overwrite render
+    
+We also need to update module resolution in jest.config.js:
+
+  moduleDirectories: [
+    'node_modules',
+    path.join(__dirname, 'src'),
+    'shared',
+    path.join(__dirname, 'test'),
+  ],
+       
+       
+ Now anywhere in our application, that we were using react-testing-library, we can actually use calculator-test-utils.
+    
+ IF we had some routers to wrap then our function might look like this:
+ 
+     function renderWithProviders(ui, options) {
+      render(
+        <Router>
+            <ReduxProvider store ={store || options.store}
+              <ThemeProvider theme={dark}>{ui} </ThemeProvider> options
+            </ReduxProvider>
+      </Router>,
+      )
+    }
+    
+    
+Note, you have to fix up eslint warning for module resoltion:
+ 
+    $ npm install --save-dev eslint-import-resolver-jest
+ 
+ and update jestconfig.js:
+ 
+     overrides: [
+        {
+          files: ['**/__tests__/**'],
+          settings: {
+            'import/resolver': {
+              jest: {
+                jestConfigFile: path.join(__dirname, './jest.config.js'),
+              },
+            },
+          },
+        },
+      ],
+
+
+
+
+ Step through Code in Jest using the Node.js Debugger and Chrome DevTools
+ 
+ Instead of console logs it would be nice to debug test code. First replace your console.log with a debugger keyword:
+ 
+     getScale(){
+        const node = this.node.current
+        debugger;     //console.log('here')
+ 
+Update package.json with a test:debug script 
+
+    "scripts": {
+        "test": "jest",
+        "test:debug": "node --inspect-brk ./node_modules/jest/bin/jest.js --runInBand",
+        // ...
+}
+
+When you run this script:
+
+    $ npm run test debug
+    
+you will see a log:
+
+    Debugger listening on ws://127.0.0.1:9229/2dbosnjnkj9-ajnkja- ....
+    
+Open Chrome and go to 
+
+    chrome://inspect
+
+And then click on inspect.
+
+( If you do wnant to see source files look for an [sm] tag on the file name in the sources tab. )
+
+
+
+
+Configure Jest to report code coverage on project files
+
+Jest comes with code coverage reporting built-into the framework. To use it you need a --coverage flag in a script. A cover age folder is created, which should be added to gitignore.
+
+
+package.json
+
+  "scripts": {
+    "test": "jest --coverage",
+    
+.gitignore
+    node modules
+    dist
+    coverage
+    
+After running npm t we can open the coverage report:
+
+    $ open coverage/lcov-report/index.html   // or just open the index.html file in your browser
+    
+If you click into individual files you see highlighted areas lacking test coverage. 
+
+IF there are some folder that should not be included in test coverage we can exclude them (eg utilities files in the tests folder). In jest.config.js configuration add a property called collectCoverageFrom:
+
+    collectCoverageFrom: ['**/src/**/*.js']    // only looks in the src folder, so will ignore the test folder
+    
+    
+
+
+
+
+
+
+
+
+    
+ 
+
