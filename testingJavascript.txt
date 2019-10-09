@@ -705,14 +705,118 @@ IF there are some folder that should not be included in test coverage we can exc
     collectCoverageFrom: ['**/src/**/*.js']    // only looks in the src folder, so will ignore the test folder
     
     
+Coverage Reports
+
+The code coverage tool uses Istanbul. It is possible to set a minimum global threshold and file specifc target in jest.config.js. 
 
 
+  coverageThreshold: {
+    global: {
+        statements: 100,
+        branches: 100,
+        lines: 100,
+        functions: 100,
+    },
+    './src/shared/utils.js': {               // file glob
+      statements: 100,
+      branches: 80,
+      functions: 100,
+      lines: 100,
+    }
+}
+    }
+    
+Here we see that the util.js file is of less importance; there is some branch that has low priorty for a test.
+
+Not reaching these targets causes a test failure.
+
+Codecov is a CI tool can help you track code coverage over time.
+
+You can make jest work in a watch mode. Inpackage.json scripts add in 
+
+    "test:watch": "jest --watch",
+
+Then run $ npm run test:watch.
+
+There are many options like pattern mode, all mode, and changes since last commit. Press 'w' for more options. The t key will filter on the test name rather than the file name. We can be hyper focused just on a failing test. This is the same as a test.only(), but without having to change any code.
 
 
+In CI, we don’t want to start the tests in watch mode, but locally we normally want to run the tests in watch mode. We can have separate scripts, but it’d be great to not have to remember which script to run locally. Let’s use is-ci-cli to run the right script in the right environment when running the test script.
 
-
-
-
+    $ npm install --save-dev is-ci-cli
     
  
+"scripts": {
+    "test": "is-ci \"test:coverage\" \"test:watch\"",    // like an OR
+    "test:coverage": "jest --coverage",
+    "test:watch": "jest --watch",
+
+
+Jest’s watch mode is pluggable and jest-watch-typeahead is one plugin that you definitely don’t want to live without. It enhances the watch mode experience to help you know which tests will be run based on your filter. It scans a head and lists out the test that will match your pattern before you have run the tests. You can even arrow up and down through the choices.
+
+    $ npm install --save-dev jest-watch-typeahead
+    
+jest.config.js:
+
+    watchPlugins: [
+        'jest-watch-typeahead/filename',
+        'jest-watch-typeahead/testname',
+    ]  
+
+Sometimes you may have situations where configuration needs to be different for certain tests.  We’ll take a look at how we could create a custom configuration for tests that are intended to run in a node environment, say on the server side.
+
+The first step is to create a jest config file for each situation. And eacg of these will require teh main shared config file. For example the client side tests might be configured in jest.client.js:
+
+module.exports = {
+  ...require('./jest-common'),                                   // Base config. Everything else is an override.
+  testEnvironment: 'jest-environment-jsdom',                       // browser like environment
+  setupTestFrameworkScriptFile: require.resolve('./test/setup-tests.js'),
+  coverageThreshold: {
+    global: {
+      statements: 17,
+      branches: 4,
+      functions: 20,
+      lines: 17,
+    },
+    './src/shared/utils.js': {
+      statements: 100,
+      branches: 80,
+      functions: 100,
+      lines: 100,
+    },
+  },
+}
+
+For server tests, we could have jest.server.js
+
+const path = require('path')
+
+module.exports = {
+  ...require('./jest-common'),
+  testEnvironment: 'jest-environment-node',
+  testMatch: ['**/__server_tests__/**/*.js'],
+  coverageDirectory: path.join(__dirname, '../coverage/server'),  // change the coverage dir so we odn't override client test coverage
+}
+
+
+To find your tests spread around your project, you may need to specify a rootDir property in your config
+
+    rootDir: path.join(__dirname, '..'),
+ 
+package.json
+"scripts": {
+    "test": "is-ci \"test:coverage\" \"test:watch:client\"",
+    "test:coverage": "npm run test:coverage:client && npm run test:coverage:server",
+    "test:coverage:client": "jest --config test/jest.client.js --coverage",
+    "test:coverage:server": "jest --config test/jest.server.js --coverage",
+    "test:watch:client": "jest --config test/jest.client.js --watch",
+    "test:watch:server": "jest --config test/jest.server.js --watch",
+    "test:debug:client": "node --inspect-brk ./node_modules/jest/bin/jest.js --config test/jest.client.js --runInBand --watch",
+    "test:debug:server": "node --inspect-brk ./node_modules/jest/bin/jest.js --config test/jest.server.js --runInBand --watch",
+    
+    
+You may also have to update .eslintrc.js with the new jestConfigFile location.
+
+
+
 
