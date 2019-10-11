@@ -817,6 +817,137 @@ package.json
     
 You may also have to update .eslintrc.js with the new jestConfigFile location.
 
+Now, however, we have a number of commends. We can use Jest's projects feature to have jest run both configurations at once. 
 
+In the command line it looks like this:
 
+    $ npx jest --projects ./test/jest.client.js ./test/jest.server.js
 
+And if we want combined code coverage accross both configurations then:
+
+    $ npx jest --projects ./test/jest.client.js ./test/jest.server.js --coverage   // could also tack on --watch
+    
+We can configure this in jest.config.js (at the root):
+
+    ...require('./test/jest-common'),
+    projects: ['./test/jest.client.js', './test/jest.server.js'],
+    collectCoverageFrom: ['**/src/**/*.js'],
+    // put any other global conif options here too: see applied config with $ npx jest --showConfig --config ./test/jest.client.js)    
+
+This will create a shared coverage report.
+
+Now that both areas are combined we can imprive the logging in the console with a display name property:
+
+jest.server.js
+    displayName: 'server',
+
+jest.client.js
+    displayName: 'dom',
+    
+ 
+Now package.json is simplified via the default configurations:
+
+"scripts": {
+    "test": "is-ci \"test:coverage\" \"test:watch\"",
+    "test:coverage": "jest --coverage",
+    "test:watch": "jest --watch",
+    "test:debug": "node --inspect-brk ./node_modules/jest/bin/jest.js --runInBand --watch",
+    
+If anybody ever wants to run a single configuration, they can just run 
+    $npx jest --config test/jest.client.js
+  
+One last thing that we can do here is update our .eslintrc.js to go back to our jest.config.js.
+
+    jestConfigFile: path.join(__dirname, './jest.config.js'),  
+  
+You can also create Jest console options (navigaable with the arrow keys) to toggle between options. Update watchPluggins:
+
+    $ npm install --save-dev jest-watch-select-projects
+
+jest.common.js
+    watchPlugins: [
+        'jest-watch-typeahead/filename',
+        'jest-watch-typeahead/testname',
+        'jest-watch-select-projects',
+    ]
+    
+ Now when you run $ npm t you'll get an extra capital 'P' option:
+ 
+ Watch Usage
+ › Press a to run all tests.
+ › Press f to run only failed tests.
+ › Press q to quit watch mode.
+ › Press p to filter by a filename regex pattern.
+ › Press P to select projects (all selected).
+ › Press t to filter by a test name regex pattern.
+ › Press Enter to trigger a test run.
+ 
+ 
+
+Run ESLint with Jest using jest-runner-eslint
+
+Jest is more than a testing platform It is excellent at running tasks in parralel and it has a capability to run more than just tests and. We can specify a custom runner, and watch mode can be used elsewhere. 
+
+You can create runners fro many things, such as python and Go tests. Here we extend Jest's features to linting.
+
+    $ npm install --save-dev jest-runner-eslint
+    
+jest.lint.js
+    const {rootDir} = require('./jest-common')  
+    
+    module.exports = {
+        rootDir,
+        runner: 'jest-runner-eslint',
+        displayName: 'lint',
+        testMatch: ['<rootDir>/**/*.js'],
+        testPathIgnorePatterns: ['/node_modules/', '/coverage/', '/dist/', '/other/'],
+        
+    $ npx jest --config test/jest.lint.js
+  
+So now we can  use watch mode and see the linting workthough each file as if it was a test.
+
+We could also update projects with our new config, so that npm t will also lint:
+
+jest.config.js
+    projects: [
+    './test/jest.lint.js',
+    './test/jest.client.js',
+    './test/jest.server.js',
+    ],
+  
+package.json
+    "lint": "jest --config test/jest.lint.js",
+        "format": "prettier \"**/*.js\" --write",
+        "validate": "npm run test && npm run build",        
+        
+        
+        
+ Run only relevant Jest tests on git commit
+ 
+Running the project tests on commit is a great way to avoid breaking the application accidentally and leverage the mechanism for confidence you have from your testbase. However, as the testbase grows this can take a very long time and slow productivity down. Let’s see how Jest is capable of running only the tests and linting only the files that are affected by the files we’re committing.
+
+Jest has a flag to run only tests related to a file:
+
+    $ npx jest --findRelatedTests src/shared/auto-scaling-text.js
+    
+To extend this into commits:
+
+    $ npm install --save-dev lint-staged husky
+    
+Husky will be responsible for installing git hooks that we can configure in our package.json which is done right here.    
+
+Now open our package.json here and configure a pre-commit script, which husky will read and run before git commits any code. Here, we can use lint-staged, which will run some scripts based off of some configuration that we provide.
+
+package.json
+    "precommit": "lint-staged",
+    
+lint-staged.config.js
+
+    module.exports = {
+    linters: {
+        '**/*.js': ['jest --findRelatedTests'],
+    },
+    } 
+ 
+ This is going to run husky, which is going to run lint-staged, which will run Jest find related tests for each one of these files. 
+ 
