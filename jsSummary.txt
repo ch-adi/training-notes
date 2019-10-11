@@ -1,0 +1,96 @@
+'typeof a' is not asking for the "type of a", but rather for the "type of the value currently in a." Only values have types in JavaScript; variables are just simple containers for those values. Remember that JavaScript has typed values, not typed variables.
+
+isNan() is not so usful because it coerces to number type. check x === x instead.
+
+Difference between break and continue in a loop
+
+Unlike other languages JS arrays can hold mixed types. Such arrays are called heterogeneous arrays. 
+
+In JavaScript, however, functions are first-class objects (collections of name:value pairs having a hidden link to a prototype object). Anything you can do with other types, including objects (String, Array, Number, etc.) you can do with a function.
+
+What make functions such a special type of object is that also have some hidden additional properties. One is 'name', which is optional and can remain anonymous, and the other is the 'Code' property. This is where the actual code sits. So the function is an object with properties. The code is just one property. Although what is special about this property is that it is invocable. So functions contain executable code, which is invoked with ().
+
+My take is that both primitive and complex variables hold a reference to a memory address. If the value is primitive the referenced memory address holds the coded binary form of the value. Memory address is just another type that is coded/decoded by the engine. If the value is complex then the referenced memory address holds references to other memory addresses. There will be a sub address for each key value pair. This creates a tree structure in which each branch eventually terminates in a memory location that holds primitive value.
+
+If you do want to interact with the global object you can just pass it into your function:
+
+    (function(global, name) {
+        global.greeting =  'Hello ' + name;
+    }(window, 'John'))
+
+Function parameters are the names listed in the function definition. Function arguments are the real values received by the function when it is invoked. Inside the function, the arguments behave as local variables.
+
+Pure functions are affected soly by the values of their arguments.  Pure functions also do not have any observable side affects. Whenever a pure function is called with the same set of arguments it will always return the same value. They are predictable. Pure functions do not modify the values to passed to them. eg 
+
+    function sqaureAll(items) {
+        //map() returns a new array so that it does not override items.
+        return items.map(square);     
+    }
+
+A namespace is a container for variables and functions. It is typically used to keep variables and fuctions with the same name separate and avoid naming collisions. JS does not have namespaces but we can fake it with objects.
+
+A higher-order function is a function that can take another function as an argument, or that returns a function as a result.
+
+closures - callback function plus the variables locked in from the surrounding scope when the outer function was executed.
+
+Currying is an anonymous way of doing closures
+
+'this', is the object that "owns" the current code. The value of this, when used in a function, is the object that "owns" the function.
+
+When code is executed it enters a [function based] 'execution context'. Part of the set up for this context is the assignment of a value to 'this'. If the value assigned refers to an object then property accessors prefixed with the 'this' keyword reference properties of that object. If the value assigned (internally) is null then the this keyword will refer to the global object. 
+
+A non-global execution context has several features: a 'this', a link to the outer environment [for the scope chain], a variable environment and 'arguments'. 'Arguments' hold all those values you have passed to the function.
+
+ES5 introduced the bind method to set the value of a function's this regardless of how it's called, and ECMAScript 2015 introduced arrow functions (see below) whose 'this' is lexically scoped; it is set to the 'this' value of the lexically enclosing execution context.
+
+So, the value of 'this' depends upon how a function is called. That is, how the execution context was generated. JavaScript functions can be invoked in 4 different ways. Each method differs in how 'this' is initialized. 
+
+1. In the global execution context (outside of any function) 'this' refers to the global object
+2. Inside a function, the value of this depends on how the function is invoked. When a function is not a method, the value of this is not changed.
+
+    function f1(){
+        return this;
+    }
+    
+    f1() === window; // true: global object
+
+Invoking a function as a method:
+
+    var myObject = {
+        firstName:"John",
+        lastName: "Doe",
+        fullName: function () {
+            return this.firstName + " " + this.lastName;
+        }
+    }
+    myObject.fullName();         // Will return "John Doe"
+
+When you use 'dot' notation, the object on the LHS of the dot is 'this'.
+
+We could also change back to the global window by creating a new global variable that references the object method/function, and thus give up the dot notation:
+
+    window.firstName = "comp";
+    window.lastName = "gangsta";
+    var globalFunc = myObject.fullName;
+    globalFunc();     // "comp gangsta"
+
+
+Arrow functions 'don't have their own 'this'. Instead they retain the 'this' value of the enclosing lexical context [at the line where the invocation occurs]. Arrow functions follow the normal variable lookup rules. So while searching for a `this` which is not present in current scope they end up finding it from its enclosing lexical scope.  
+
+    const a2 = {
+        name: "my name is a", 
+        log: () => { console.log(this) }
+    };
+
+    a2.log() // Window {postMessage: ƒ, blur: ƒ, focus: ƒ, close: ƒ, frames: Window, …}
+
+So, in this example the arrow function's execution context is created when it is called. However because we have an arrow funciton 'this' has not been assigned. So the scope chain, found by the surround lexical context, is followed. Here, because we are not inside a function, the surrounding lexical context, which is the next step in the scope chain, is the global context [at the moment the invocation occurs / the execution context is set up]. That is, `a2.log()`, our the arrow function, lexically sits inside the global execution context. 
+
+3. We can also over-ride 'this' with apply and bind. Note that bind() really means makeCopyBoundTo(). 
+
+4. The fourth way to bind 'this' involves the new keyword. That is, invoking a function constructor. It may appear that you are creating a new function, but since JavaScript functions are objects you actually create a new object. A function constructor is a normal function that is used to create objects.  If you use the new keyword the 'this' variable points to a new empty object, and that object is returned from the function automatically. 
+
+
+
+
+
