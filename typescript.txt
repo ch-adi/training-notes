@@ -766,7 +766,7 @@ Decorators are functions you can attach to classes, methods, and properties. Dec
 
 Decorators are basically functions. They get one argument from Typescript, which is mananged by Typescript. For a class decorator the argument you should expect for your decorator function is the constructor function for an object (i.e. what you are really are dealing with behind the syntactic sugar of class syntax). 
 
-    function logged(constructorFn: Function) {
+    function logged(constructorFn: Function) { 
         console.log(constructorFn); // logs out the constructor function without having to 'new up' a Person object
     }
 
@@ -820,6 +820,76 @@ A more advanced example:
 
     // Object logged:
     // Plant {name: "Green Plant"}
+
+
+Real world example:
+
+In this example we take the strongest approach, which is a class based (instead of constructor based) decorator function. Of note is that a decorator is not allowed to change the API of an object. That means that the base class definition must already contain a public method of the correct name.
+
+In the following decorator factory we specify that the base must already be of a certain type (ie so that we are not changing the base class API).  We see this after the extends keyword:  Constructor<IEventEmitter<TEventTypes>>> .
+
+
+  interface IEventEmitter<TEventTypes = {}> {
+     emit(event?: EventType | TEventTypes): void;
+  }
+
+  export function withHandleEvents<TEventTypes = {}>(eventHandler: (event: TEventTypes) => void) {
+     return <TBase extends Constructor<IEventEmitter<TEventTypes>>>(Base: TBase) => {
+        return class extends Base {
+           emit(event: TEventTypes) {
+              super.emit(event);            // invoke code in the base emit method, if any
+
+              eventHandler(event);
+           }
+        };
+     };
+  }
+  
+And now follows a unit test that consumes this code. We see that the Emitter class already has an emit method. Therefore it's constructor does meet the type Constructor<IEventEmitter<TEventTypes>>>. And while it is only a stub in this case, we have made things easier for consumer should they want to have more than a stub. This specific code is called aboe by super.emit(). A simple example would be some logging that other decorated classes would not have implemented.
+  
+    describe('class mixin for connecting an emitter class to an event handler', () => {
+     it('when the object emits, the connected handler is called', () => {
+        const handler = jest.fn();
+
+        @withHandleEvents<{ type: 'event'}>(handler)
+        class Emitter implements IEventEmitter {
+           emit(event: { type: 'event'}) {}             // empty stub 
+        }
+
+        const emitter = new Emitter;
+
+        emitter.emit({ type: 'event' });
+
+        expect(
+           handler
+        ).toBeCalledWith({ type: 'event'});
+     });
+  });
+
+
+If we wanted to change the base class API we could do it by speicifying a return type for the decorator and also wrapping up the base class. However this is less type safe. We could passing in any old object into the decorator.
+
+  export function withHandleEvents<TEventTypes = {}>(eventHandler: (event: TEventTypes) => void) {
+     return <TBase extends Constructor>(Base: TBase): Constructor<IEventEmitter<TEventTypes>> => {      //now a return type
+        return class extends Base {
+           emit(event: TEventTypes) {
+              //super.emit(event); // we no longer need the base to have the method
+              eventHandler(event);
+           }
+        };
+     };
+  }
+  
+    //@withHandleEvents<{ type: 'event'}>(handler)
+    const emitterWithHandleEvents = withHandleEvents<{ type: 'event'}>(handler)(
+      class Emitter /*implements IEventEmitter*/ {    // does not have to be specified type
+         //emit(event: { type: 'event'}) {}  // no longer needed
+      });
+
+    const emitter = new emitterWithHandleEvents();
+
+
+
 
 
 

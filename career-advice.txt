@@ -107,6 +107,9 @@ First and foremost, I'd expect a junior developer's top priority to be improving
 
 The second I hear something that even smells like "that's not worth my time" is the second they get their first reprimand. 
 
+Wrong level of abstraction / code not abstracted. Functions / components that are too specific but should be a bit less specific and others that are too general where they should be a bit more specific.
+
+Unaware of pre existing solutions. Often there might be a existing component / function hidden in utils.js that handles a part of the problem the juniors code is solving. Often juniors are not aware of these and implement their own solution instead.
 
 
 

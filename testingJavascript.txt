@@ -158,7 +158,7 @@ One way to do this is 'monkey-patching'. We import some functionality but assign
     const winner = thumbWar('Kent C. Dodds', 'Ken Wheeler')
     assert.strictEqual(winner, 'Kent C. Dodds')    // if the rest of thumbWar is working then p1 should now always be the result
 
-    utils.getWinner = originalGetWinner   // properly dispose of our version of getWinner.
+    utils.getWinner = originalGetWinner   // properly dispose of our version of getWinner i.e. fix up the original object.
     
 
 In this case it would also be great to test how getWinner is being called. For example, what if it was not called with the correct arguments. Say only p1 and not p2. The test would still pass but the implementation would be wrong.
@@ -190,7 +190,7 @@ Inspecting the mocked function object actually allows us to replace many of thes
       [ 'Kent C. Dodds', 'Ken Wheeler' ]
     ]);
     
-That is, we know there have been two calls and what the arguments for those calls have been.
+That is, we know there have been two calls and what the arguments for those calls have been, with just one assertion.
 
 
 We could make our own mocking function to get the same result:
@@ -203,6 +203,9 @@ We could make our own mocking function to get the same result:
       mockFn.mock = {calls: []}
       return mockFn
     }
+    
+    const originalGetWinner = utils.getWinner
+    utils.getWinner = fn((p1, p2) => p1)
 
     assert.strictEqual(winner, 'Kent C. Dodds')
     assert.deepStrictEqual(utils.getWinner.mock.calls, [
@@ -214,7 +217,7 @@ This fn function accepts an implementation and returns a function that calls tha
 
 It also keeps track of all the arguments that it's called with so that we can assert how that function is called, allowing us to catch issues in our integration with the getWinner function.
  
-Having to dispose of our version of the mocked function can be tiresome. The workout is to use spyOn and restore. spyOn takes an object and a method:
+Having to dispose of our version of the mocked function can be tiresome. The workaround is to use spyOn and restore. spyOn takes an object and a method:
 
     test('returns winner', () => {
       jest.spyOn(utils, 'getWinner')   // instead of `const originalGetWinner = utils.getWinner`
@@ -225,7 +228,8 @@ Having to dispose of our version of the mocked function can be tiresome. The wor
       // cleanup
       utils.getWinner.mockRestore()  // instead of `utils.getWinner = originalGetWinner`
     
- To make our own version we first need a mock function factory that takes a default empty function:
+    
+ To make our own version we first need to update our mock function factory with a mockImplementation method:
  
     function fn(impl = () => {}) {
       const mockFn = (...args) => {
@@ -245,4 +249,705 @@ And spyOn:
       obj[prop].mockRestore = () => (obj[prop] = originalValue)
     }
     
-SpyOn is resonisble for tracking the original value. Then it provides a mockRestore function, which we can use to restore the originalValue to that object.
+So, SpyOn is resonisble for tracking the original value and then restoring the originalValue.
+
+
+So far our monkey-patching has been working because we have been using common JS. It does not work with es6 modules. However, jest allows you to mock an entire module with the jest.mock API. The first argument is the module being mocked, realtive to the call to jest.mock. The 2nd argument is a module factory function that will return a mocked version of the module.
+
+    jest.mock('../utils', () => {
+      return {
+        getWinner: jest.fn((p1, p2) => p1)
+      }
+    })
+
+    test('returns winner', () => {
+        // remove spyon and mock implementation
+      const winner = thumbWar('Kent C. Dodds', 'Ken Wheeler')
+      expect(winner).toBe('Kent C. Dodds')
+      expect(utilsMock.getWinner.mock.calls).toEqual([
+        ['Kent C. Dodds', 'Ken Wheeler'],
+        ['Kent C. Dodds', 'Ken Wheeler']
+      ])
+
+      // cleanup
+      utils.getWinner.mockReset() // replace mockRestore with mockReset
+    })
+    
+Also before Jest runs our code, it moves the jest.mock call up to the top of the file to ensure that the mock is in place before any of our modules are loaded. This is useful as other imports are often hoisted to the top of the file.
+    
+If you wanted to implement this yourself you would need the require cache. If you were to log it out you would see an object with many keys:
+
+    console.log(require.cache);
+    
+    { '/Users/kdodds/Developer/js-mocking-fundamentals/node_modules/jest-worker/build/child.js':
+      Module {
+        id: '.',
+        exports: {},
+        parent: null,
+        ...
+      }
+    }
+    
+Let's go ahead and get the utilsPath with require.resolve('../utils'). We'll then say require.cache at the utilsPath equals an object, and this object needs to resemble a module, so we'll say id is utilsPath, the filename is utilsPath, loaded is true, and exports is our mock, so we'll say getWinner is a call to our function with p1, p2 always returning p1. 
+    
+    const utilsPath = require.resolve('../utils')
+    require.cache[utilsPath] = {
+      id: utilsPath,
+      filename: utilsPath,
+      loaded: true,
+      exports: {
+        getWinner: fn((p1, p2) => p1)
+      }
+      
+      // cleanup
+       delete require.cache[utilsPath]
+    }
+ 
+With that, we can change things here a little bit. Let's put fn() up here at the top. We'll get rid of this spyOn function, we don't need that anymore. We'll get rid of our getWinner.mockImplementation call here.
+
+We'll change our cleanup to delete require.cache at that utilsPath. That way any other modules that want to use the utils can do so without having trouble with our module mocking them out.
+
+We could also preload the require.cache with the mock module that we want to have loaded when thumb-war requires the utils module.
+
+    require.cache[utilsPath] = {
+      id: utilsPath,
+      filename: utilsPath,
+      loaded: true,
+      exports: {
+        getWinner: fn((p1, p2) => p1)
+      }
+    }
+
+
+If more than one test will need a mock of a module you can externalise your mock directory. Create a __mocks__ directory next to the file you wish to mock. Inside this directory create a file with the same name as the file to be mocked. 
+
+For example, if we are to mock the getWinner method from the utils directory, the __mocks__/utils will look like:
+
+    module.exports = {
+      getWinner: jest.fn((p1, p2) => p1)
+    }
+
+In our test file we now need this:
+
+    jest.mock('../utils')
+
+
+
+Configuring Jest
+-------------------------------------
+
+
+Jest runs in node (via a some binaries in the .bin folder in node modules).
+
+When Jest runs it automatically sets the node environment variable to 'test'. This allows us to change other configurations, such as the webpack config, when we are running tests. So, for example, in somehwere like .babelrc.js we can choose a to load mosules in a way that suits test but not production:
+
+    const isTest = String(process.env.NODE_ENV) === 'test'
+    
+    presets: [
+        ['@babel/preset-env', {modules: isTest ? 'commonjs' : false}],    
+
+
+That's saying, "Hey, Babel preset env. When you come across a module, and if we're in the test environment, I want you to transpile that to commonjs so that it works in Node. Otherwise, we're probably building with webpack, and so, I don't want you to transpile that."
+
+Eventhough Jest is running in node you can still log out 'window'. That is we can run tests in the browser too. Jest is intended to test JavaScript that runs in the browser or in node. This is because of a module called JSDOM. JSDOM will simulate this browser environment. There's a little bit of a performance hit for Jest to set up this JSDOM test environment. If you're just writing code that can run in Node then it's better to tell Jest to run that code in a Node test environment and not set up JSDOM.
+
+You can force a node environment by passing on the argument env=node:
+
+    npm t -- --env=node   // any tests that uses 'window' will fail with a warning now: ReferenceError: window is not defined
+    
+You can also set a node environment in a jest.config.js:
+
+    module.exports = {
+        testEnvironment: 'jest-environment-node',     // 'jest-environment-jsdom' if you do want JSDOM
+    }
+
+Say, when testing react componest with css files, you may get errors around css files imported as modules. Webpack has a loader (called 'style-loader') that handles modules. However in the node environment, node assumes that the imported statement for the css file is referring to a node module. We want to tell Jest that any time it sees a .css import we want it to resolve to some other module. We need a regex expression to map from css to a style mock. jest.config.js:
+
+    module.exports = {
+        testEnvironment: 'jest-environment-jsdom',
+        moduleNameMapper: {
+        '\\.css$': require.resolve('./test/style-mock.js'),
+      }
+    }
+
+A style mock doesn't need to be anything special. We can just say module.exports equals a empty object. style-mock.js:
+
+    module.exports = {}
+    
+Now, however, any tests that look at style wont show much:
+
+    import 'react-testing-library/cleanup-after-each'
+    import React from 'react'
+    import {render} from 'react-testing-library'
+    import AutoScalingText from '../auto-scaling-text'
+
+    test('renders', () => {
+      const {container} = render(<AutoScalingText />)   // get the container from this render
+      console.log(container.innerHTML) 
+    })
+    
+The log displays <div style="transform: scale(1,1);"></div>, but we don't see the className that is associated with the autoscalling text. 
+    
+    $ npm install --save-dev identity-obj-proxy
+    
+  
+      moduleNameMapper: {
+        '\\.module\\.css$': 'identity-obj-proxy',
+        '\\.css$': require.resolve('./test/style-mock.js'),
+      },
+      
+Now we log the property we are trying to access:
+
+    <div class= "autoScalingText" style="transform: scale(1,1);"></div> 
+    
+Again, this is only a generated value because this is CSS modules. However it is a lot more helpful to have something like that there in our output, both when we're debugging and if we want to take a snapshot of this HTML.
+      
+Now, it's important to have these in the right order, because these both will match the module.css files, but we want any module.css to match the identity-obj-proxy instead.    
+    
+    
+Snapshots
+
+Snapshots creates a serialized value of the object we are expecting. In this case we will look at serialising and foratting DOM nodes. 
+ 
+ ( aside: serialization (or serialisation) is the process of translating data structures or object state into a format that can be stored (for example, in a file or memory buffer) or transmitted (for example, across a network connection link) and reconstructed later (possibly in a different computer environment).) 
+ 
+In jest, an object is serialized as a string (and pretty prints it).
+
+    import 'react-testing-library/cleanup-after-each'
+    import React from 'react'
+    import {render} from 'react-testing-library'
+    import CalculatorDisplay from '../calculator-display'
+
+    test('mounts', () => {
+      const {container} = render(<CalculatorDisplay value="0" />)
+      
+      // the value we will end up asserting in this test (checking it out for now)
+      console.log(container.innerHTML)     // logs some HTML but it is untidy.
+    })
+    
+We could actually snapshot container.innerHTML, but the problem with that is any change to any of these attributes would negate the entire snapshot would be harder to read diffs of the snapshot.   
+
+If you only have one child that you're rendering, then it doesn't actually make any sense to snapshot that diff. You could actually snapshot the firstChild which will be the root node of the thing that you're rendering. For us that's this div here.
+
+    calculator-display.js
+    expect(container.firstChild).toMatchSnapshot()
+
+In this way your snapshot would be a little less nested and so easier to read. The resultant snapshots are useful for people readding your commits and finding bugs.
+
+One great feature of Jest snapshots is custom serialzers. And, someone has already done that for us with the emotion package:
+
+    $ npm install --save-dev jest-emotion
+    
+    import {createSerializer} from 'jest-emotion'
+    import * as emotion from 'emotion'
+    
+Then, we'll use the Jest API for adding a snapshot serializer:
+
+    expect.addSnapshotSerializer(createSerializer(emotion))  // allows for a much nicer representation of class names
+    
+There are bunch of different snapshot serializers available on npm.
+
+For example, there is a package called jest-serializer-path that removes absolute paths and normalized paths across all platforms in your Jest snapshots. Many snapshot serializer packages, like this one, actually expose the serializer itself rather than requiring you to create it in code, and for snapshot serializers like that, you can actually edit your Jest configuration and add a snapshotSerializers property with an array of path to packages.
+
+jest.config.js:
+
+    module.exports = {
+      testEnvironment: 'jest-environment-jsdom',
+      moduleNameMapper: {
+        '\\.module\\.css$': 'identity-obj-proxy',
+        '\\.css$': require.resolve('./test/style-mock.js'),
+      },
+      snapshotSerializers: []
+    }
+    
+We have already covered static imports. Now we look at dynamic imports, which are not supported in node. Babel won't transpile dynamic imports to commonjs. 
+
+We need to install a new package that will transpile this to commonjs so that our tests will work. We'll run npm install --save-dev babel-plugin-dynamic-import-node. 
+
+Now, let's go ahead and update our Babel configuration to use this plugin, but we only want to use it when we're running our tests. We want Webpack to take over in production when we're building our application.
+
+.babelrc.j:
+
+    isTest ? 'babel-plugin-dynamic-import-node' : null,
+
+
+
+Automatically setting up imports before each test.
+
+If the same imports are being used across a number of test files we can ask Jest to import all these modules automatically. This saves a few import lines in each test file.
+
+Throw all reused imports into setup-tests.js:
+
+setup-tests.js
+
+    import 'react-testing-library/cleanup-after-each'
+
+    import {createSerializer} from 'jest-emotion'
+    import * as emotion from 'emotion'
+
+    expect.addSnapshotSerializer(createSerializer(emotion))
+
+
+In jest.config.js there are a couple of available hooks:
+
+
+module.exports = {
+  testEnvironment: 'jest-environment-jsdom',
+  moduleNameMapper: {
+    '\\.module\\.css$': 'identity-obj-proxy',
+    '\\.css$': require.resolve('./test/style-mock.js'),
+  },
+  // setupFiles: [],     // before Jest is loaded -  not so useful for us
+  setupTestFrameworkScriptFile: require.resolve('./test/setup-tests.js'),  // after Jest is loaded
+}
+
+
+
+Custom Module Resolution:
+
+Webpack’s resolve.modules configuration is a great way to make common application utilities easily accessible throughout your application. However, Jest does not use this configeration
+
+
+The way our CalculatorDisplay is implemented, the calculator-display is imported. It's asynchronously loaded.
+
+calculator.js:
+
+    const CalculatorDisplay = loadable({
+      loader: () => import('calculator-display').then(mod => mod.default),
+      loading: () => <div style={{height: 120}}>Loading display...</div>,
+    })
+
+src/tests was like this:
+
+test('renders', () => {
+    const {container, debug} = render(<Calculator />)   // we see 'Loading Display...'
+    debug(container)
+})
+
+But now we want to load it async so that the calculator display has time to display
+
+    import loadable from 'react-loadable'
+
+    test('renders', async () => {      // is no async with react-loadable imported
+        await loadable.preloadAll()
+        const {container, debug} = render(<Calculator />)  
+        debug(container)
+    }
+
+However this will break with this error: Cannot find module 'calculator-display' from 'calculator.js'
+
+The reason for this is because here, in calculator.js we're importing calculator-display as if it were a node module, but it's not a node module. It actually lives in the shared directory as calculator-display. And while webpack can resolve this module Jest is not configured to do so.
+
+This is the webpack config:
+
+    resolve: {
+        modules: ['node_modules', path.join(__dirname, 'src'), 'shared']
+    }
+
+While we apply to jest.config.js
+
+    const path = require('path')   // new import needed for moduleDirectories
+
+    module.exports = {
+      testEnvironment: 'jest-environment-jsdom',
+      moduleDirectories: ['node_modules', path.join(__dirname, 'src'), 'shared'],
+      moduleNameMapper: {
+        '\\.module\\.css$': 'identity-obj-proxy',
+        '\\.css$': require.resolve('./test/style-mock.js'),
+      },
+      setupTestFrameworkScriptFile: require.resolve('./test/setup-tests.js'),
+    }
+
+
+
+
+Support a Test Utilities File with Jest moduleDirectories
+
+Every large testbase has common utilities that make testing easier to accomplish. Whether that be a custom render function or a way to generate random data. 
+
+In this example, we now have a provider that supplies some styling based on theme. To make our test pass we need to remember to wrap up a component with the theme provider:
+
+    import CalculatorDisplay from '../calculator-display'
+    import {dark} from '../../themes'
+
+    test('mounts', ( => {
+      const {container} = render(
+        <ThemeProvider theme={dark}>
+          <CalculatorDisplay value="0" />
+        </ThemeProvider>
+      )
+      expect(container.firstChild).toMatchSnapshot
+    })
+
+ This same thing would happen if we're using the Redux Provider, or React Router Provider, or some internationalization provider. It will be nice, if this render method could just render all the providers that we're really care about automatically for us. 
+ 
+ Let's say we have a utils file that automatically returns a wrapped component:
+ 
+test/calculator-test-utils.js:
+
+    import React from 'react'
+    import {render} from 'react-testing-library'
+    import {ThemeProvider} from 'emotion-theming'
+    import {dark} from '../src/themes'
+
+    function renderWithProviders(ui, options) {
+      return render(<ThemeProvider theme={dark}>{ui}</ThemeProvider>, options)
+    }
+
+    export * from 'react-testing-library'
+    export {renderWithProviders as render}   // overwrite render
+    
+We also need to update module resolution in jest.config.js:
+
+  moduleDirectories: [
+    'node_modules',
+    path.join(__dirname, 'src'),
+    'shared',
+    path.join(__dirname, 'test'),
+  ],
+       
+       
+ Now anywhere in our application, that we were using react-testing-library, we can actually use calculator-test-utils.
+    
+ IF we had some routers to wrap then our function might look like this:
+ 
+     function renderWithProviders(ui, options) {
+      render(
+        <Router>
+            <ReduxProvider store ={store || options.store}
+              <ThemeProvider theme={dark}>{ui} </ThemeProvider> options
+            </ReduxProvider>
+      </Router>,
+      )
+    }
+    
+    
+Note, you have to fix up eslint warning for module resoltion:
+ 
+    $ npm install --save-dev eslint-import-resolver-jest
+ 
+ and update jestconfig.js:
+ 
+     overrides: [
+        {
+          files: ['**/__tests__/**'],
+          settings: {
+            'import/resolver': {
+              jest: {
+                jestConfigFile: path.join(__dirname, './jest.config.js'),
+              },
+            },
+          },
+        },
+      ],
+
+
+
+
+ Step through Code in Jest using the Node.js Debugger and Chrome DevTools
+ 
+ Instead of console logs it would be nice to debug test code. First replace your console.log with a debugger keyword:
+ 
+     getScale(){
+        const node = this.node.current
+        debugger;     //console.log('here')
+ 
+Update package.json with a test:debug script 
+
+    "scripts": {
+        "test": "jest",
+        "test:debug": "node --inspect-brk ./node_modules/jest/bin/jest.js --runInBand",
+        // ...
+}
+
+When you run this script:
+
+    $ npm run test debug
+    
+you will see a log:
+
+    Debugger listening on ws://127.0.0.1:9229/2dbosnjnkj9-ajnkja- ....
+    
+Open Chrome and go to 
+
+    chrome://inspect
+
+And then click on inspect.
+
+( If you do wnant to see source files look for an [sm] tag on the file name in the sources tab. )
+
+
+
+
+Configure Jest to report code coverage on project files
+
+Jest comes with code coverage reporting built-into the framework. To use it you need a --coverage flag in a script. A cover age folder is created, which should be added to gitignore.
+
+
+package.json
+
+  "scripts": {
+    "test": "jest --coverage",
+    
+.gitignore
+    node modules
+    dist
+    coverage
+    
+After running npm t we can open the coverage report:
+
+    $ open coverage/lcov-report/index.html   // or just open the index.html file in your browser
+    
+If you click into individual files you see highlighted areas lacking test coverage. 
+
+IF there are some folder that should not be included in test coverage we can exclude them (eg utilities files in the tests folder). In jest.config.js configuration add a property called collectCoverageFrom:
+
+    collectCoverageFrom: ['**/src/**/*.js']    // only looks in the src folder, so will ignore the test folder
+    
+    
+Coverage Reports
+
+The code coverage tool uses Istanbul. It is possible to set a minimum global threshold and file specifc target in jest.config.js. 
+
+
+  coverageThreshold: {
+    global: {
+        statements: 100,
+        branches: 100,
+        lines: 100,
+        functions: 100,
+    },
+    './src/shared/utils.js': {               // file glob
+      statements: 100,
+      branches: 80,
+      functions: 100,
+      lines: 100,
+    }
+}
+    }
+    
+Here we see that the util.js file is of less importance; there is some branch that has low priorty for a test.
+
+Not reaching these targets causes a test failure.
+
+Codecov is a CI tool can help you track code coverage over time.
+
+You can make jest work in a watch mode. Inpackage.json scripts add in 
+
+    "test:watch": "jest --watch",
+
+Then run $ npm run test:watch.
+
+There are many options like pattern mode, all mode, and changes since last commit. Press 'w' for more options. The t key will filter on the test name rather than the file name. We can be hyper focused just on a failing test. This is the same as a test.only(), but without having to change any code.
+
+
+In CI, we don’t want to start the tests in watch mode, but locally we normally want to run the tests in watch mode. We can have separate scripts, but it’d be great to not have to remember which script to run locally. Let’s use is-ci-cli to run the right script in the right environment when running the test script.
+
+    $ npm install --save-dev is-ci-cli
+    
+ 
+"scripts": {
+    "test": "is-ci \"test:coverage\" \"test:watch\"",    // like an OR
+    "test:coverage": "jest --coverage",
+    "test:watch": "jest --watch",
+
+
+Jest’s watch mode is pluggable and jest-watch-typeahead is one plugin that you definitely don’t want to live without. It enhances the watch mode experience to help you know which tests will be run based on your filter. It scans a head and lists out the test that will match your pattern before you have run the tests. You can even arrow up and down through the choices.
+
+    $ npm install --save-dev jest-watch-typeahead
+    
+jest.config.js:
+
+    watchPlugins: [
+        'jest-watch-typeahead/filename',
+        'jest-watch-typeahead/testname',
+    ]  
+
+Sometimes you may have situations where configuration needs to be different for certain tests.  We’ll take a look at how we could create a custom configuration for tests that are intended to run in a node environment, say on the server side.
+
+The first step is to create a jest config file for each situation. And eacg of these will require teh main shared config file. For example the client side tests might be configured in jest.client.js:
+
+module.exports = {
+  ...require('./jest-common'),                                   // Base config. Everything else is an override.
+  testEnvironment: 'jest-environment-jsdom',                       // browser like environment
+  setupTestFrameworkScriptFile: require.resolve('./test/setup-tests.js'),
+  coverageThreshold: {
+    global: {
+      statements: 17,
+      branches: 4,
+      functions: 20,
+      lines: 17,
+    },
+    './src/shared/utils.js': {
+      statements: 100,
+      branches: 80,
+      functions: 100,
+      lines: 100,
+    },
+  },
+}
+
+For server tests, we could have jest.server.js
+
+const path = require('path')
+
+module.exports = {
+  ...require('./jest-common'),
+  testEnvironment: 'jest-environment-node',
+  testMatch: ['**/__server_tests__/**/*.js'],
+  coverageDirectory: path.join(__dirname, '../coverage/server'),  // change the coverage dir so we odn't override client test coverage
+}
+
+
+To find your tests spread around your project, you may need to specify a rootDir property in your config
+
+    rootDir: path.join(__dirname, '..'),
+ 
+package.json
+"scripts": {
+    "test": "is-ci \"test:coverage\" \"test:watch:client\"",
+    "test:coverage": "npm run test:coverage:client && npm run test:coverage:server",
+    "test:coverage:client": "jest --config test/jest.client.js --coverage",
+    "test:coverage:server": "jest --config test/jest.server.js --coverage",
+    "test:watch:client": "jest --config test/jest.client.js --watch",
+    "test:watch:server": "jest --config test/jest.server.js --watch",
+    "test:debug:client": "node --inspect-brk ./node_modules/jest/bin/jest.js --config test/jest.client.js --runInBand --watch",
+    "test:debug:server": "node --inspect-brk ./node_modules/jest/bin/jest.js --config test/jest.server.js --runInBand --watch",
+    
+    
+You may also have to update .eslintrc.js with the new jestConfigFile location.
+
+Now, however, we have a number of commends. We can use Jest's projects feature to have jest run both configurations at once. 
+
+In the command line it looks like this:
+
+    $ npx jest --projects ./test/jest.client.js ./test/jest.server.js
+
+And if we want combined code coverage accross both configurations then:
+
+    $ npx jest --projects ./test/jest.client.js ./test/jest.server.js --coverage   // could also tack on --watch
+    
+We can configure this in jest.config.js (at the root):
+
+    ...require('./test/jest-common'),
+    projects: ['./test/jest.client.js', './test/jest.server.js'],
+    collectCoverageFrom: ['**/src/**/*.js'],
+    // put any other global conif options here too: see applied config with $ npx jest --showConfig --config ./test/jest.client.js)    
+
+This will create a shared coverage report.
+
+Now that both areas are combined we can imprive the logging in the console with a display name property:
+
+jest.server.js
+    displayName: 'server',
+
+jest.client.js
+    displayName: 'dom',
+    
+ 
+Now package.json is simplified via the default configurations:
+
+"scripts": {
+    "test": "is-ci \"test:coverage\" \"test:watch\"",
+    "test:coverage": "jest --coverage",
+    "test:watch": "jest --watch",
+    "test:debug": "node --inspect-brk ./node_modules/jest/bin/jest.js --runInBand --watch",
+    
+If anybody ever wants to run a single configuration, they can just run 
+    $npx jest --config test/jest.client.js
+  
+One last thing that we can do here is update our .eslintrc.js to go back to our jest.config.js.
+
+    jestConfigFile: path.join(__dirname, './jest.config.js'),  
+  
+You can also create Jest console options (navigaable with the arrow keys) to toggle between options. Update watchPluggins:
+
+    $ npm install --save-dev jest-watch-select-projects
+
+jest.common.js
+    watchPlugins: [
+        'jest-watch-typeahead/filename',
+        'jest-watch-typeahead/testname',
+        'jest-watch-select-projects',
+    ]
+    
+ Now when you run $ npm t you'll get an extra capital 'P' option:
+ 
+ Watch Usage
+ › Press a to run all tests.
+ › Press f to run only failed tests.
+ › Press q to quit watch mode.
+ › Press p to filter by a filename regex pattern.
+ › Press P to select projects (all selected).
+ › Press t to filter by a test name regex pattern.
+ › Press Enter to trigger a test run.
+ 
+ 
+
+Run ESLint with Jest using jest-runner-eslint
+
+Jest is more than a testing platform It is excellent at running tasks in parralel and it has a capability to run more than just tests and. We can specify a custom runner, and watch mode can be used elsewhere. 
+
+You can create runners fro many things, such as python and Go tests. Here we extend Jest's features to linting.
+
+    $ npm install --save-dev jest-runner-eslint
+    
+jest.lint.js
+    const {rootDir} = require('./jest-common')  
+    
+    module.exports = {
+        rootDir,
+        runner: 'jest-runner-eslint',
+        displayName: 'lint',
+        testMatch: ['<rootDir>/**/*.js'],
+        testPathIgnorePatterns: ['/node_modules/', '/coverage/', '/dist/', '/other/'],
+        
+    $ npx jest --config test/jest.lint.js
+  
+So now we can  use watch mode and see the linting workthough each file as if it was a test.
+
+We could also update projects with our new config, so that npm t will also lint:
+
+jest.config.js
+    projects: [
+    './test/jest.lint.js',
+    './test/jest.client.js',
+    './test/jest.server.js',
+    ],
+  
+package.json
+    "lint": "jest --config test/jest.lint.js",
+        "format": "prettier \"**/*.js\" --write",
+        "validate": "npm run test && npm run build",        
+        
+        
+        
+ Run only relevant Jest tests on git commit
+ 
+Running the project tests on commit is a great way to avoid breaking the application accidentally and leverage the mechanism for confidence you have from your testbase. However, as the testbase grows this can take a very long time and slow productivity down. Let’s see how Jest is capable of running only the tests and linting only the files that are affected by the files we’re committing.
+
+Jest has a flag to run only tests related to a file:
+
+    $ npx jest --findRelatedTests src/shared/auto-scaling-text.js
+    
+To extend this into commits:
+
+    $ npm install --save-dev lint-staged husky
+    
+Husky will be responsible for installing git hooks that we can configure in our package.json which is done right here.    
+
+Now open our package.json here and configure a pre-commit script, which husky will read and run before git commits any code. Here, we can use lint-staged, which will run some scripts based off of some configuration that we provide.
+
+package.json
+    "precommit": "lint-staged",
+    
+lint-staged.config.js
+
+    module.exports = {
+    linters: {
+        '**/*.js': ['jest --findRelatedTests'],
+    },
+    } 
+ 
+ This is going to run husky, which is going to run lint-staged, which will run Jest find related tests for each one of these files. 
+ 
