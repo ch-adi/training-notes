@@ -951,3 +951,85 @@ lint-staged.config.js
  
  This is going to run husky, which is going to run lint-staged, which will run Jest find related tests for each one of these files. 
  
+ 
+ 
+ 
+ 
+ Cypress
+ ----------------------------------------------------
+ 
+    $ npm install --save-dev cypress   // yarn add cypress --save
+ 
+ .eslintrc.js
+    plugins: ['eslint-plugin-cypress'],
+    env: {'cypress/globals': true},
+ 
+ .gitignore:
+    cypress/videos
+    cypress/screenshots
+ 
+Then start cypress: $ yarn run cypress open
+ 
+In the tool that opens up you can click on settings to see the config and environment variables that are available.
+ 
+ 
+Example:
+
+counter.js (in the cypress directory):
+
+describe('Counter', ()=> {
+    it('can increment', () => {
+
+        const user = cy;  // by calling cy `user` you better represent the user focus
+        user                                  // chain async commands:
+            .visit('http://localhost:3001/') //go to server address
+            .get(':nth-child(3) > :nth-child(3)')   // change subjct to button (use selection tool)
+            .click()                // click actioned on most recent subject
+            .get(':nth-child(3) > div')   // change subject again
+            .should('have.text', '1')  // make assertion on expected UI changes
+    })
+})
+
+After running the test you can click on the history on the LHS to see each step as a visual snapshot.
+ 
+On minor problem is that supplying a full url in visit() causes a refresh on each test. Instead we can store the URL in the config and tell visit to go to root (i.e.  .visit('/') ).
+
+
+cypress.json
+
+{
+    "baseUrl": "http://localhost:3001/"
+}
+
+The default folder name of 'integration' is not idea. Rename it to e2e and update the config
+
+e2e/cypress.json:
+
+{
+  "baseUrl": "http://localhost:8080",
+  "integrationFolder": "cypress/e2e"
+}
+
+You can also configure the viewport:
+    "viewportHeight": 900,
+    "viewportWidth": 400
+
+There's also an env file which you can use to configure Cypress. You can use environment variables, CLI arguments, when we open up Cypress in the first place, as well as a plugin file. 
+
+ We can also improve the selectors so that they are more readable:
+ 
+    $ npm install --save-dev @testing-library/cypress  // get dome test library into cypress
+ 
+In support/index.js ` import '@testing-library/cypress/add-commands'`. This is going to add custom commands to Cypress that we can use in our tests. In this case, we can now use getByText. 
+
+    .findByText(/^+$//) // enter regex that matches the text in the '+' button
+
+And test ids are also available:
+
+    .findByTestId('count')   // change subject again
+
+
+
+
+
+
