@@ -1031,5 +1031,121 @@ And test ids are also available:
 
 
 
+Node Scripts
+
+We can figure a script to start the server, and then wait untill the serer is reposding to open cypress. First install:
+
+    $ npm install --save-dev start-server-and-test
+    
+"scripts": {
+    "cy:run": "cypress run",
+    "cy:open": "cypress open",
+    "test:e2e": "is-ci \"test:e2e:run\" \"test:e2e:dev\"",
+    "pretest:e2e:run": "npm run build",   // make sure the lates changes have built before testing ('pre' is an automatic hook)
+    "test:e2e:run": "start-server-and-test start http://localhost:3001/ cy:run"  // wait for server to respond and then runs cypress
+    "test:e2e:dev": "start-server-and-test dev http://localhost:8080 cy:open",
+    "validate": "npm run test:coverage && npm run test:e2e:run",
+}
+   
+   
+   
+Debugging
+ 
+Cypress will pop up the dev tools if you have a standard debugger statement. However, to place that keyword in a useful location you need to insert a then() into the chain. It callback simplly needs to return what ever it receives so that the chian can continue.   
+    
+    cy.visit('/')
+      .getByText(/^1$/)
+      .click()
+      .getByText(/^\+$/)
+      .click()
+      .getByText(/^2$/)
+      .then(subject => {       // here
+          debugger             
+          return subject
+      })
+      .click()
+      .getByText(/^=$/)
+      .click()
+      .getByTestId('total')
+      .should('have.text', '4')
+
+
+You can also 'debuger' in your source code. However, so that you can access variables atfter a test has run you can test for cypress and then add information to the window. Here is some component and we want to access the state at one point of time, but later after running the test.
+
+ReactDOM.render(
+  <Component initialState={{}}>
+    {({state, setState}) => {
+      if(window.Cypress) {                         
+        window.appState = state
+        window.setAppState = setState
+      }
+    //...
+
+Now you can check out window.appState in the dev tools console.
+
+
+
+Backend/user Registration test example
+
+generate.ts  // will generate unique user data each time - you might also have to clear the database for each test run and mock any email reponses
+
+import {build, fake} from 'test-data-bot'
+
+const userBuilder = build('User').fields({
+  username: fake(f => f.internet.userName()),
+  password: fake(f => f.internet.password()),
+})
+
+export {userBuilder}
+
+register.js (test file)
+
+import {userBuilder} from '../support/generate'
+
+describe('registration', () => {
+  it('should register a new user', () => {
+    const user = userBuilder()
+       cy.visit('/')
+      .getByText(/register/i)
+      .click()
+      .getByLabelText(/username/i)
+      .type(user.username)
+      .getByLabelText(/password/i)
+      .type(user.password)
+      .getByText(/submit/i)
+      .click()
+      .url()
+      .should('eq', `http://localhost:8080`)
+  })
+})
+
+
+
+Test/Cypress driven Development
+
+Because you have access to the dev tools in the cypress tools you can use Cypress in TDD mode. You do not a separate browser window.
+
+
+Simulate HTTP Errors
+
+While it is normally preferable to test error states using integration or unit tests, there are some situations where it can be really useful to mock out a response to test a specific scenario in an E2E test. Let’s use the cypress server and route commands to mock a response from our registration request to test the error state.
+
+it.only(`should show an error message if there's an error registering`, () => {
+  cy.server()       // macks a fake cypress server to intercept requests
+  cy.route({          
+      method: 'POST',
+      url: 'http://localhost:3000/register',
+      status: 500,                              // send back an error code
+      response: {},                         // could speicify a reponse if required
+   })
+  cy.visit('/register')             // try to register with no details in the input fields
+    .getByText(/submit/i)
+    .click()
+    .getByText(/error.*try again/i)       // should get error text
+})
+
+
+
+
 
 
