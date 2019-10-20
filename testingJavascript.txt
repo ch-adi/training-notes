@@ -1144,8 +1144,130 @@ it.only(`should show an error message if there's an error registering`, () => {
     .getByText(/error.*try again/i)       // should get error text
 })
 
+As tests grow we run the risk of adding tests that do little to imprive confidence and yet they add to the noise if there is a bug. For example one test may test registration. But then another test, which tests logging back in, may need to run through the registration steps as part of it's set up phase. We already have a test for registration and so we don't want this second test to fail if registration fails. In the second test one work around is bypass the UI-user focus involved in registration and just use the API: 
+
+    cy.request({
+        url: 'http://localhost:3000/register',
+        method: 'POST',
+        body: user,
+    })
+ 
+ Now, since we might often like to register new users, we can set up a custom command.
+ 
+ support/commands.js:
+ 
+ import {userBuilder} from './generate'
+
+    Cypress.Commands.add('createUser', overrides => {
+        const user = userBuilder(overrides)
+        cy.request({
+        url: 'http://localhost:3000/register',
+        method: 'POST',
+        body: user,
+        })
+    })
+ 
+  'oversides' allows for optional parameters to be passed in.
+  
+  So, you could paste this into your test now:
+  
+  cy.createUser()
+    cy.visit('/')
+      .getByText(/login/i)
+       .click()
+      .getByLabelText(/username/i)
+      .type(user.username)           // error here
+
+But now the user object is not defined. However, cy.request returns the response objet, which will contain user data. If we attached a .then() to the custom command, we can then wrap the rest of the test code:
 
 
+command.js:
+
+import {userBuilder} from './generate'
+
+Cypress.Commands.add('createUser', overrides => {
+  const user = userBuilder(overrides)
+  return cy
+    .request({
+      url: 'http://localhost:3000/register',
+      method: 'POST',
+      body: user,
+    })
+    .then(({body}) => body.user)    // response body contains the user
+})
+
+(you can get the method and URL from inspecting the dev tools. Click on the relevant step in the cypress tools history and you should het to the request)
+
+test:
+
+describe('login', () => {
+  it('should login an existing user', () => {
+    cy.createUser().then(user => {
+      cy.visit('/')
+        .getByText(/login/i)
+        .click()
+        .getByLabelText(/username/i)
+        .type(user.username)       // all good now.
+        // ....
+
+
+Here is another example that uses a custom user registration but then also logs in the user. This is a good set up for all tests that assume a user has bene logged in already. Doing it this way will also speed up your tests.
+
+    cy.createUser().then(user => {
+      // login as the new user
+      cy.request({
+        url: 'http://localhost:3000/login',
+        method: 'POST',
+        body: user,
+      }).then(({body}) => {
+        window.localStorage.setItem('token', body.user.token)    // inspecting the reponse shows that a returned token is set in localstorage
+      })
+
+
+We can also use custom cypress commands for reusable assertions. When we have the same assertion used in more than one location we can both absract-awaythis duplicate code and also make a our tests more readable.
+
+Say some tests have these should() assertions:
+
+describe('registration', () => {
+  it('should register a new user', () => {
+       // ...
+    .url()
+    .should('eq', `${Cypress.config().baseUrl}/`)
+    .window()
+    .its('localStorage.token')
+    .should('be.a', 'string')
+    .getByTestId('username-display')
+    .should('have.text', user.username)
+
+In commands.js we can break up these two assertions:
+
+Cypress.Commands.add('assertHome', () => {
+  cy.url().should('eq', `${Cypress.config().baseUrl}/`)
+})
+
+Cypress.Commands.add('assertLoggedInAs', user => {
+  cy.window()
+    .its('localStorage.token')
+    .should('be.a', 'string')
+    .getByTestId('username-display', {timeout: 500})
+    .should('have.text', user.username)
+})
+
+Now our test, and other that use these asserts look cleaner:
+
+describe('registration', () => {
+  it('should register a new user', () => {
+       // ...
+      .assertHome()
+      .assertLoggedInAs(user)
+  })
+
+If you are testing that something does not exist getByText will not work. After 4000ms it throws an error if an element does not exist. Instead use queryByTestId. Eg, say we are testing for a log out then the user name display should no longer be there. 
+
+        .getByText(/logout/i)                
+        .click()                                            //click the logout button
+        .queryByTestId('username-display', {timeout: 300})  // 300 ms timout to wait for the user display to exist
+        .should('not.exist')
 
 
 
