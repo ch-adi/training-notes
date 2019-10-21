@@ -1,6 +1,6 @@
 The basic question MobX tries to answer is how we can keep the state consistent/synchonized with the UI. 
 
-Two functions from Mobx demonstrate the solution. Let's say we have a counter with `count` as the state, which is displayer in the UI:
+Two functions from Mobx demonstrate the solution. Let's say we have a counter with `count` as the state, which is displayed in the UI:
 
    export class Counter extends React.Component {
    
@@ -8,11 +8,10 @@ Two functions from Mobx demonstrate the solution. Let's say we have a counter wi
       // ...
       <button>{this.count}</button> 
    
- Using the observable function tell MobX to track a value. Any component that uses that value is decorate with the observer function. Use @abserver tells MobX that this components rendering can be derived from the relevant observables. This separates the state and the component that reacts to that state.
+Using the observable function tells MobX to track a value. Any component that uses that value is decorated with the observer function. Using `@abserver` tells MobX that this component's rendering can be derived from the relevant observables. This separates the state and the component that reacts to that state.
  
 Now we don't even need to have the state in the react component:
- 
-  
+   
  const appState: IAppState = observable({
     count: 0
 });
@@ -26,7 +25,7 @@ export class Counter extends React.Component {
     render() {
         return (
             <div>
-                <div data-testid="count">{appState.count}</div>
+                <div data-testid="count">{appState.count}</div> // no need to reference any props
             </div>
         )
     }
@@ -39,27 +38,76 @@ MobX is built around four key concepts:
  - computed values
  - reactions
  
-And one very important principle is that we should use the smalled amount of state and derive all else from that state.
+And one very important principle is that we should use the smallest amount of state and derive all else from that state.
+
+Derivations form the backbone of MobX and come in two flavors: computed values are values that can be derived from the state automatically. And reactions can be used to manage side effects, such as drawing the user interface.
  
-We decorate derivations with @computed. This tells MobX that such properties can be completely derived from observables. 
+We decorate computed derivations with @computed. This tells MobX that such properties can be completely derived from observables. 
  
 Computed values are not allowed to create side-effects, such as changing state (or even logging statements). They should be pure functions of observables or other computed values. This is because MobX must be left to determine the best time update htem, which then allows missions of computed values to live in memory and still only track a few of them. Computed values are suspended if not needed.
  
 Here we see an example of our important principle. Because we only have one temperature type in state, and compute the rest, then we need less actions to update the state:
  
+export class TemperatureModel {
+    @observable unit: Unit = 'C';
     @observable cTemp = 25;
 
     @computed get kTemp() {
+        console.log('Calculating Kelvin');  // side effect: only here for demo purposes
         return this.cTemp + 273.15;
     }
 
     @computed get fTemp() {
+        console.log('Calculating fahrenheit');  // side effect: only here for demo purposes
         return this.cTemp * (9/5) + 32;
     }
+
+    @computed get temp() {
+        console.log('Calculating temperature');  // side effect: only here for demo purposes
+        switch(this.unit) {
+            case 'K': 
+                return this.kTemp + ' \u00B0K';
+            case 'F': 
+                return this.fTemp + ' \u00B0F';
+            case 'C': 
+                return this.cTemp + ' \u00B0C';
+            default:
+                return NaN;
+        }
+    }
+
+    setUnit(unit: Unit) {
+        this.unit = unit;
+    }
+}
+
+This model is consumed in a component:
+
+@observer                           // necessary for changes in the computed value of temp to be picked up.
+export class Temperature extends React.Component {
+
+    tempModel = new TemperatureModel();
+
+    render() {
+        return (
+            <div>
+                <span>{this.tempModel.temp}</span>
+                <br/>
+                <button onClick={() => this.tempModel.setUnit('C')}>C</button>
+                <button onClick={() => this.tempModel.setUnit('K')}>K</button>
+                <button onClick={() => this.tempModel.setUnit('F')}>F</button>
+            </div>
+        )
+    }
+
+}
+
  
 The computations are only triggered when we inspect a computed value. By default MobX does not try and keep computed values up to date. It instead tries to defer calculations under they are need by IO or side effects. To make computed values react to the state we have to consume them in a Mobx reaction.
+
+So in the above example we see 'Calculating temperature' when the app first starts. If we change units, with setUnit, only then is the relevant ftemp or ktemp calucated via get temp(), eg 'Calculating Kelvin'.
  
-Reacts do not produce a value. Instead they produce a side effect. The side effect of an observer-decorated component is re-rendering of the DOM. 
+Reactions do not produce a value. Instead they reactivly trigger a side effect. An observer is an example of a reaction. It's associated side effect is pushing a render to the DOM.
 
    
    
