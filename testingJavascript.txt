@@ -1051,7 +1051,7 @@ We can figure a script to start the server, and then wait untill the serer is re
    
 Debugging
  
-Cypress will pop up the dev tools if you have a standard debugger statement. However, to place that keyword in a useful location you need to insert a then() into the chain. It callback simplly needs to return what ever it receives so that the chian can continue.   
+Cypress will pop up the dev tools if you have a standard debugger statement. However, to place that keyword in a useful location you need to insert a then() into the chain. Its callback simply needs to return what ever it receives so that the chian can continue.   
     
     cy.visit('/')
       .getByText(/^1$/)
@@ -1082,6 +1082,26 @@ ReactDOM.render(
     //...
 
 Now you can check out window.appState in the dev tools console.
+
+Since the cypress browser is actually just a chrome browser it is also useful to just install the standard react dev tools. However there is a trick: Cypress is built with react as well. Once you've googled and install the etension you'll see all the cypress controls as react components too. So, you have to register your application with the react dev tools in the browser. You can do that within your public/index.html. 
+
+You'll see that we have our script tag loading up our React bundle.js here. We need our changes to execute  before React is loaded onto the page in that script tag (in the body).
+
+    <script type="text/javascript" src="bundle.js"></script>
+    
+ In the head section well add another script tag:
+
+  <script>
+    if (window.Cypress) {
+      window.__REACT_DEVTOOLS_GLOBAL_HOOK__ = window.parent.__REACT_DEVTOOLS_GLOBAL_HOOK__
+    }
+  </script>
+ 
+__REACT_DEVTOOLS_GLOBAL_HOOK__ is a variable that the React developer tool sets onto the page. React internally will reference this variable to register components with it. We'll assign it to the one that comes from our parent, because the parent is where React DevTools is installed. We'll just forward that along to ourselves, so that React running within the iframe has access to it.
+
+You could do all this in your bundle if you do it before React loads on the page. Or you could make little script in a file, say 'react-dev-tools.js' and just place an import statement at the top of index.js:
+
+    import './react-dev-tools'  // [now automatically loaded in the browser before any other imports in this file]
 
 
 
@@ -1224,9 +1244,31 @@ Here is another example that uses a custom user registration but then also logs 
       })
 
 
-We can also use custom cypress commands for reusable assertions. When we have the same assertion used in more than one location we can both absract-awaythis duplicate code and also make a our tests more readable.
+We can also use custom cypress commands for reusable assertions. When we have the same assertion used in more than one location we can both absract-away this duplicate code and also make a our tests more readable.
 
-Say some tests have these should() assertions:
+With the above example we can do this:
+
+commands.js:
+
+Cypress.Commands.add('login', user => {
+  cy.request({
+      url: 'http://localhost:3000/login',
+      method: 'POST',
+      body: user,
+  }).then(({body}) => {
+    window.localStorage.setItem('token', body.user.token)
+  })
+})
+
+and Back in the test:
+
+describe('authenticated calculator', () => {
+  it('displays the username', () => {
+    cy.createUser().then(user => {
+      // login as the new user
+      cy.login(user)
+
+As another example or reusable code, say that some tests duplicate these should() assertions:
 
 describe('registration', () => {
   it('should register a new user', () => {
@@ -1262,12 +1304,34 @@ describe('registration', () => {
       .assertLoggedInAs(user)
   })
 
+This all ties into the important testing principle that tests are isolated They should not depend upon one another. For example, we now have a createUser command and a login command. But each test should be indpendant have have a unique new user. So we should combine these commands:
+
+
+commands.js:
+
+Cypress.Commands.add('loginAsNewUser', () => {
+  cy.createUser().then(user => {
+    cy.login(user)
+  })
+})
+
+
+Back in the test:
+
+describe('authenticated calculator', () => {
+  it('displays the username', () => {
+    cy.loginAsNewUser().then(user => {
+      cy.visit('/')
+        .getByTestId('username-display')
+        .should('have.text', user.username)
+
+(Although we do need to update the login command to return body.user, and not just body)
+
+
 If you are testing that something does not exist getByText will not work. After 4000ms it throws an error if an element does not exist. Instead use queryByTestId. Eg, say we are testing for a log out then the user name display should no longer be there. 
 
         .getByText(/logout/i)                
         .click()                                            //click the logout button
         .queryByTestId('username-display', {timeout: 300})  // 300 ms timout to wait for the user display to exist
         .should('not.exist')
-
-
 
