@@ -44,9 +44,9 @@ Derivations form the backbone of MobX and come in two flavors: computed values a
  
 We decorate computed derivations with @computed. This tells MobX that such properties can be completely derived from observables. 
  
-Computed values are not allowed to create side-effects, such as changing state (or even logging statements). They should be pure functions of observables or other computed values. This is because MobX must be left to determine the best time update htem, which then allows missions of computed values to live in memory and still only track a few of them. Computed values are suspended if not needed.
+Computed values are not allowed to create side-effects, such as changing state (or even logging statements). They should be pure functions of observables or other computed values. This is because MobX must be left to determine the best time update item, which then allows millions of computed values to live in memory and yet they don't have to be constantly updated. Computed values are suspended if not needed.
  
-Here we see an example of our important principle. Because we only have one temperature type in state, and compute the rest, then we need less actions to update the state:
+Here we see an example of our important principle. Because we only have one temperature type in state, and compute the rest, then we need less work to update the 'state' (observables + computeds):
  
 export class TemperatureModel {
     @observable unit: Unit = 'C';
@@ -99,7 +99,6 @@ export class Temperature extends React.Component {
             </div>
         )
     }
-
 }
 
  
