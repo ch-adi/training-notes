@@ -762,7 +762,7 @@ Another way of doing this is to have an object holding arrays, which would look 
 Decorators
 --------------------------------------------------
 
-Decorators are functions you can attach to classes, methods, and properties. Decorators then allow you to work with extend or modify these entities. It is a kind of meta programming. 
+Decorators are functions you can attach to classes, methods, and properties. Decorators then allow you to extend or modify these entities. It is a kind of meta programming. 
 
 Decorators are basically functions. They get one argument from Typescript, which is mananged by Typescript. For a class decorator the argument you should expect for your decorator function is the constructor function for an object (i.e. what you are really are dealing with behind the syntactic sugar of class syntax). 
 
