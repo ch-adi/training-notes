@@ -1427,13 +1427,25 @@ Arrow function example:
      
     a2.log() // Window {postMessage: ƒ, blur: ƒ, focus: ƒ, close: ƒ, frames: Window, …}
 
-Arrow functions 'don't have their own 'this'. Instead they retain the 'this' value of the enclosing lexical context [at the line where the invocation occurs]. Arrow functions follow the normal variable lookup rules. So while searching for this which is not present in current scope they end up finding this from its enclosing scope. 
+ And more:   
 
-So, in this example the arrow function's execution context is created when it is called. However because we have an arrow funciton 'this' has not been assigned. So the scope chain, found by the surround lexical context, is followed. Here, because we are not inside a function, the surrounding lexical context, which is the next step in the scope chain, is the global context [at the moment the invocation occurs / the execution context is set up]. That is, `a2.log()`, our the arrow function, lexically sits inside the global execution context. 
+    function foo() {
+        a2.log();
+    }
+
+    foo() // Window {postMessage: ƒ, blur: ƒ, focus: ƒ, close: ƒ, frames: Window, …}
+
+    const a3 = {zap: foo}
+
+    a3.zap() // Window {postMessage: ƒ, blur: ƒ, focus: ƒ, close: ƒ, frames: Window, …}
+
+Arrow functions 'don't have their own 'this'. Instead they retain the 'this' value of the enclosing lexical context (see the section 'Scope and Hoisting'). Arrow functions follow the normal variable lookup rules. So while searching for this which is not present in current scope they end up finding this from its enclosing scope. 
+
+So, in this example the arrow function's execution context is created when it is called. However because we have an arrow funciton 'this' has not been assigned. So the scope chain, derived by the surrounding lexical context, is followed. Here, the a2 object has not deen defined.writtend inside a function. So the surrounding lexical context, which is the next step in the scope chain, is the global context. That is, the line `a2.log()`, our the arrow function, lexically (physical location within the code) sits inside the global execution context. Not matter how we latter assign or consume a2.log(), as we do in foo() and a3, a2.log() has been written in the global context.
 
 (Arrow functions also do not have their own arguments object. Thus, arguments is simply a reference to the arguments of the enclosing scope).
 
-Since non-arrow function's have their own 'this' binding you cannot refer to the this of the wrapping scope. Arrow functions allow us to do that. In the following code, 'this' is actually from a function that lexically wraps an arrow function:
+Since non-arrow function's have their own 'this' binding you cannot refer to the this of the wrapping scope. Arrow functions allow us to do that. In the following code, 'this' is actually from a function that lexically [and stack wise?] wraps an arrow function:
 
     function normalize() {
       console.log(this.coords.map(num => num / this.length));
@@ -3574,7 +3586,7 @@ Recall that part of an execution context has a reference to the outside environm
 
 Also, understand the concept of a lexical environment: a lexical environment exists in languages in which WHERE you write is important (for the compiler). When we talk about the lexical context for a piece of code, we mean where it has been written and what is around it. For example, you might say the contents of a function sit lexically within that function. Also, the relative position of code pieces such as variables can give you an idea of where information sits in memory.  
 
-Here function b sits lexially within the global execution environemnt. So the b() execution context has a reference to the global execution context. The JS engine is bypassing the a() execution context in it's search for myVar's value. While the b() execution context does sit on top of the a() execution context in the execution stack, we say 'lexically' that the b() execution context actually sits on top of the global execution context. The b() 'lexical environment' sits next to the a() lexical environment. That is, both functions are declared at the same level in the same file. While b() is called inside a(), b() is not declared inside a().
+Here function b sits lexially within the global execution environemnt. So the b() execution context has a reference to the global execution context. The JS engine is bypassing the a() execution context, which is next in the stack, in it's search for myVar's value. While the b() execution context does sit on top of the a() execution context in the execution stack, we say 'lexically' that the b() execution context actually sits on top of the global execution context. The b() 'lexical environment' sits next to the a() lexical environment. That is, both functions are declared at the same level in the same file. While b() is called inside a(), b() is not declared inside a().
 
 So, the scope chain is a series of links of outer environment references.
 
@@ -3591,7 +3603,7 @@ The main type of scope in Javascript is Lexical Scoping. Present in the language
 
 Lexical scope: 
 
-var is used to denote a variable which is Lexically Scoped to the current
+var is used to denote a variable which is lexically scoped to the current
 function:
 
     function someFunc() {
@@ -3604,7 +3616,7 @@ aVariable is lexically scoped within someFunc
 
 Block Scope:
 
-let & const are used to denote variables which are Block Scoped to the
+let & const are used to denote variables which are block scoped to the
 current curly braced block:
 
     if (true) {

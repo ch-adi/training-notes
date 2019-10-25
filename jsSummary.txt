@@ -1,6 +1,6 @@
 'typeof a' is not asking for the "type of a", but rather for the "type of the value currently in a." Only values have types in JavaScript; variables are just simple containers for those values. Remember that JavaScript has typed values, not typed variables.
 
-isNan() is not so usful because it coerces to number type. check x === x instead.
+isNan() is not so useful because it coerces to number type. check x === x instead.
 
 Difference between break and continue in a loop
 
@@ -12,7 +12,7 @@ What make functions such a special type of object is that also have some hidden 
 
 My take is that both primitive and complex variables hold a reference to a memory address. If the value is primitive the referenced memory address holds the coded binary form of the value. Memory address is just another type that is coded/decoded by the engine. If the value is complex then the referenced memory address holds references to other memory addresses. There will be a sub address for each key value pair. This creates a tree structure in which each branch eventually terminates in a memory location that holds primitive value.
 
-If you do want to interact with the global object you can just pass it into your function:
+If you do want to interact with the global object when using an IIFE you can just pass it into your function:
 
     (function(global, name) {
         global.greeting =  'Hello ' + name;
@@ -20,7 +20,7 @@ If you do want to interact with the global object you can just pass it into your
 
 Function parameters are the names listed in the function definition. Function arguments are the real values received by the function when it is invoked. Inside the function, the arguments behave as local variables.
 
-Pure functions are affected soly by the values of their arguments.  Pure functions also do not have any observable side affects. Whenever a pure function is called with the same set of arguments it will always return the same value. They are predictable. Pure functions do not modify the values to passed to them. eg 
+Pure functions are affected solely by the values of their arguments.  Pure functions also do not have any observable side affects. Whenever a pure function is called with the same set of arguments it will always return the same value. They are predictable. Pure functions do not modify the values to passed to them. eg 
 
     function sqaureAll(items) {
         //map() returns a new array so that it does not override items.
@@ -84,7 +84,7 @@ Arrow functions 'don't have their own 'this'. Instead they retain the 'this' val
 
     a2.log() // Window {postMessage: ƒ, blur: ƒ, focus: ƒ, close: ƒ, frames: Window, …}
 
-So, in this example the arrow function's execution context is created when it is called. However because we have an arrow funciton 'this' has not been assigned. So the scope chain, found by the surround lexical context, is followed. Here, because we are not inside a function, the surrounding lexical context, which is the next step in the scope chain, is the global context [at the moment the invocation occurs / the execution context is set up]. That is, `a2.log()`, our the arrow function, lexically sits inside the global execution context. 
+So, in this example the arrow function's execution context is created when it is called. However because we have an arrow function 'this' has not been assigned. So the scope chain, found by the surrounding lexical context, is followed. Here, because we are not inside a function, the surrounding lexical context (ie not necessarily the next execution context in the stack but rather the execution context in which the function was written/defined), which is the next step in the scope chain, is the global context. That is, the line `a2.log()`, our the arrow function, lexically (within the code) sits inside the global execution context. Making an object, like a2 does not create a new execution context. So a2 and its log method are in the global execution context.
 
 3. We can also over-ride 'this' with apply and bind. Note that bind() really means makeCopyBoundTo(). 
 
