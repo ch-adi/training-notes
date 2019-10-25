@@ -108,11 +108,50 @@ So in the above example we see 'Calculating temperature' when the app first star
  
 Reactions do not produce a value. Instead they reactivly trigger a side effect. An observer is an example of a reaction. It's associated side effect is pushing a render to the DOM.
 
+
+
+Observable objects, arrays, and maps to store state
+---------------------------------------------------------
+
+The observable decorator creates a new getter and setter for each key value pair in the decorated object. And, you don't need classes either. An object literal works as well. If you pass in functions without arguments then these are assumed to be computed:
+
+   const t = observable({
+      unit: 'C',                          // observable
+      tempCels = 25,                      // observable
+      tempK: function() {                 // computed
+         return this.tempCels + 273.15
+      }
+   })
+
+You can observable arrays that respect the normal array API.
+
+   const temps = observable([]);
+   temps.push(new Temperature());
+
+You can always slice them if you need a regular array for some other library.
+
+Observable maps are available is you need a dymanically keyed collection:
+
+   const temps = observable(asMap({
+      'Amseterdam': new Temperature(),
+      'Rome': new Temperature()
+   }))
+
+Like a map, you can iterate over entries to create JSX elements:
+
+     const InternationalTemp = [...this.tempModel.worldTemps.entries()].map(
+         ([city, t]: [string, TemperatureModel], index) => <div key={index}>{city}: {t.temp}</div>
+     );
    
+While it's not often used you can also make primitive observables. However, since primitives are immutable, they are not really primitive observables. They are reference (or 'boxed') values with setters and getters attached.   
    
-   
-   
-   
+    boxed = observable(42);
+    boxed.set(43);
+    boxed.get();  // 43
+  
+  
+  
+  
    
 //////////////////////////////////////////////////////   
 
@@ -151,4 +190,6 @@ doThing() also causes a redraw. Everything inside is normally batched up so that
 
       this.otherState = 1;
    }
+
+//////////////////////////////////////////////////////////
 
