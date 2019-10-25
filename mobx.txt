@@ -149,10 +149,68 @@ While it's not often used you can also make primitive observables. However, sinc
     boxed.set(43);
     boxed.get();  // 43
   
+
+
+Use actions to change and guard state
+------------------------------------------
+
+Actions complete the state management circle. They modify state from which subsequent reactions then follow. Actions can be implicit (eg modifying an observable in the console) or explicit with an @action decorator. Explicit actions clearly indicate our intention to modify state.
+
+Recall that Mobx runs all derviations synchromously. If we were to modify two observables at once (eg quickly, and implicitly changing the tmep unit from 'K' to 'F'), then MobX will simply run the associated code twice. To avoid this you can group actions in 'transactions', which are automatically genererated if you use the explicit decorator. 
+
+Let's say we have an action that updates both the temperature and the units, 'setTemperatureAndUnit': 
+
+    @action setUnit(newUnit) {
+        this.unit = newUnit;
+    }
+
+    @action setCelsius(degrees) {
+        this.temperatureCelsius = degrees;
+    }
+
+    @action
+    setTemperatureAndUnit(degrees, unit) {
+        this.setCelsius(degrees);
+        this.setUnit(unit);
+    }
+
+ Normally the temperature would have to recalculated for both modifications. However with this arrangement it is only called once.
+
+{ aside: You can make a transaction yourself by import transaction from mobx and passing in a callback:
+
+    transaction( () => {
+        this.unit = 'C';
+        this.unit = 'K';
+    })
+}
+ We can also prevent all non-action decorated code from modifying the state:
+
+    import { useStrict } = mobx
+    
+    useStrict(true); // after imports but above the code
   
-  
-  
-   
+    t.unit = 'K';  // [mobx] Invariant failed: It is not allowed to create or change state outside of an action
+
+Actions can also be named, which helps with debugging in the MobX dev tools.
+
+    @action('set temp and update units')
+    setTemperatureAndUnit(degrees, unit) {
+        this.setCelsius(degrees);
+        this.setUnit(unit);
+    }
+
+Enable the change log in the devtools to see the name as well as the arguments used. 
+    // action 'set temp and update units' // following computations and reactions are also listed
+    // [20, 'K']
+        // action 'set celsius'
+        [20]
+        // updated 'temperature@' ....
+
+
+
+
+
+
 //////////////////////////////////////////////////////   
 
 class Thing {
