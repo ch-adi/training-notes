@@ -190,7 +190,7 @@ However, this would get tedius for every test. Instead you can directly import c
 Debug the DOM state during tests with debug()
 -----------------------------------------------------
 
-Render also returns a debug method. You can call it without arguments at any point inside a test to see the full do in the console. If you want to see a smaller subset then pass in a component.
+Render also returns a debug method. You can call it without arguments at any point inside a test to see the full DOM in the console. If you want to see a smaller subset then pass in a component.
 
   test('renders a number input with a label "Favorite Number"', () => {
       const { getByLabelText, debug } = render(<FavNumber />)
@@ -219,20 +219,179 @@ Let's say we have an event handler listen for 'change' events in an input:
         this.number = Number( (event.target as HTMLInputElement).value );
     }
 
-import { render, cleanup, fireEvent } from '@testing-library/react'
+In the render method within the associated component we have a conditional rendering of a div that containers an error message:
 
-test('entering an invalid value shows an error message', () => {
-    const { getByLabelText, getByTestId } = render(<FavNumber />)
-    const input = getByLabelText(/favorite number/i)
-    fireEvent.change(input, { target: { value: 10 } })
-    expect(getByTestId('error-message')).toHaveTextContent(
-        /the number is invalid/i,
-    )
-})
+    {isValid ? null : (
+        <div data-testid="error-message">The number is invalid</div>
+    )}
+
+
+In this test there are three examples of how we might find and test the text in that div:
+
+
+  import { render, cleanup, fireEvent } from '@testing-library/react'
+
+  test('entering an invalid value shows an error message', () => {
+      const { getByLabelText, getByTestId, container, getByText } = render(<FavNumber />)
+
+      const input = getByLabelText(/favorite number/i)
+      fireEvent.change(input, { target: { value: 10 } })
+
+      // not very explicit
+      expect(container).toHaveTextContent(
+          /the number is invalid/i,
+      )
+
+      //essentially an assertion because will throw an error is it can't find such a node
+      getByText(/the number is invalid/i) 
+
+      // more explicit
+      expect(getByTestId('error-message')).toHaveTextContent(
+          /the number is invalid/i,
+      )
+  })
 
 A huge number of event types exist on fireEvent. Examples include click, copy, and paste.  
   
   
+
+
+Testing Props update with `rerender`
+---------------------------------------------------------
+
+We can pass in props to the component under test with the rerender method. Here we extend the above test by checking the default props and then changing one of the props.
+
+  test('entering an invalid value shows an error message', () => {
+      const { getByLabelText, getByTestId, rerender, queryByText, debug } = render(<FavNumber />)
+
+      const input = getByLabelText(/favorite number/i)
+      fireEvent.change(input, { target: { value: 10 } })
+
+      expect(getByTestId('error-message')).toHaveTextContent(
+          /the number is invalid/i,
+      )
+
+      // rerender with a new prop that will make the user's error message disappear
+      rerender(<FavNumber max={10}/>)
+
+      // example of how to test something does not exist
+      expect(queryByText(/the number is invalid/i)).toBe(null)
+  })
+
+
+
+
+Test accessibility of rendered React Components with jest-axe
+--------------------------------------------------------------
+
+In this example we have a form without an associated label. We can use jest-axe to search out accessibility violations and pick this up (it logs to the console).
+
+  import React from 'react'
+  import {render} from 'react-testing-library'
+  import {axe, toHaveNoViolations} from 'jest-axe'
+  import 'jest-axe/extend-expect'   // allow us to use toHaveNoViolations
+
+  // expect.extend(toHaveNoViolations)  // can manually extend here instead of 'import 'jest-axe/extend-expect'
+
+  function Form() {
+    return (
+      // should have a label here
+      <form>
+        <input placeholder="username" name="username" />
+      </form>
+    )
+  }
+
+  // what the form should look like (id in the input matches the htmlFor in the label):
+  function AccessibleForm() {
+    return (
+      <form>
+        <label htmlFor="username">Username</label>
+        <input id="username" placeholder="username" name="username" />
+      </form>
+    )
+  }
+
+  // note that axe is async
+  test('the form is accessible', async () => {
+    const {container} = render(<Form />)
+    const results = await axe(container.innerHTML)
+    expect(results).toHaveNoViolations()      // fails: "Form elements must have labels (label)"
+  })
+
+
+
+Mock HTTP Requests with jest.mock and async expectations
+--------------------------------------------
+
+This component uses an async HTTP APIc all called loadGreeting:
+
+  @observer
+  export class GreetingLoader extends Component {
+      private inputRef: React.RefObject<HTMLInputElement> = React.createRef()
+
+      @observable
+      greeting = '';
+
+      loadGreetingForInput = async (e: React.FormEvent<HTMLFormElement>) => {
+          e.preventDefault()
+          const { data } = await loadGreeting(this.inputRef.current.value)
+          //const data = this.inputRef.current.value;
+          this.greeting = data;
+      }
+
+      render() {
+          return (
+              <form onSubmit={(e) => this.loadGreetingForInput(e)}>
+                  <label htmlFor="name">Name</label>
+                  <input id="name" ref={this.inputRef} />
+                  <button type="submit">Load Greeting</button>
+                  <div data-testid="greeting">{this.greeting}</div>
+              </form>
+          )
+      }
+  }
+
+  import React, { ReactElement } from 'react'
+  import '@testing-library/jest-dom/extend-expect'
+  import { render, cleanup, fireEvent, wait } from '@testing-library/react'
+  import { GreetingLoader } from './greeting'
   
+  // ***
+  //after mocking a module below we used this import to help with the last two assertions
+  // ***
+  import { loadGreeting as mockLoadGreeting } from '../api/loadGreeting'
+
+  // making an async mock
+  jest.mock('../api/loadGreeting', () => {
+      return {
+          loadGreeting: jest.fn(value =>
+              Promise.resolve({ data: value })
+      ,)}
+  })
+
+  afterEach(cleanup)
+
+  test('Submitted greeting is displayed', async () => {
+      const { getByLabelText, getByTestId, getByText, debug } = render(<GreetingLoader />)
+
+      const testInputValue = 'Bob';
+
+      const input = getByLabelText(/Name/i)
+      fireEvent.change(input, { target: { value: testInputValue } })
+
+      const sumbutButton = getByText(/Load Greeting/i)
+      fireEvent.click(sumbutButton);
+
+      // how to test async code with `wait`, which is imported directly from RTL
+      await wait(() => expect(getByTestId('greeting')).toHaveTextContent(
+          testInputValue,
+      ))
+
+      expect(mockLoadGreeting).toHaveBeenCalledTimes(1);
+      expect(mockLoadGreeting).toHaveBeenCalledWith(testInputValue);
+  })
+
+
 
 
