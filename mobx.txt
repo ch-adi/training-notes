@@ -156,7 +156,7 @@ Use actions to change and guard state
 
 Actions complete the state management circle. They modify state from which subsequent reactions then follow. Actions can be implicit (eg modifying an observable in the console) or explicit with an @action decorator. Explicit actions clearly indicate our intention to modify state.
 
-Recall that Mobx runs all derviations synchromously. If we were to modify two observables at once (eg quickly, and implicitly changing the tmep unit from 'K' to 'F'), then MobX will simply run the associated code twice. To avoid this you can group actions in 'transactions', which are automatically genererated if you use the explicit decorator. 
+Recall that Mobx runs all derviations synchromously. If we were to modify two observables at once (eg quickly, and implicitly changing the temp unit from 'K' to 'F'), then MobX will simply run the associated code twice. To avoid this you can group actions in 'transactions', which are automatically genererated if you use the explicit decorator. 
 
 Let's say we have an action that updates both the temperature and the units, 'setTemperatureAndUnit': 
 
