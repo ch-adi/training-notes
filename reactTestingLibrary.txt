@@ -887,9 +887,103 @@ Since this is an entirely new flow, we need to add a new test.
 
 
 
+Sharing Code betwen tests
+--------------------------------
 
+Our tests may share a lot of duplicated code. For example all our server tests may use post data. If we can make this code reusable then test maintenance is easier and it is also clearer what the difference is between the tests.
 
+Here we make a set up function that returns all the standard utilities plus the extra data that we want to use in the tests:
+
+  function renderEditor() {
+    const fakeUser = userBuilder()
+    const utils = render(<Editor user={fakeUser} />)   // the RTL methos are now 'utils'
+    const fakePost = postBuilder()
+
+    utils.getByLabelText(/title/i).value = fakePost.title
+    utils.getByLabelText(/content/i).value = fakePost.content
+    utils.getByLabelText(/tags/i).value = fakePost.tags.join(', ')
+    const submitButton = utils.getByText(/submit/i)
+    return {
+      ...utils,                               // return back the methods we may need
+      submitButton,
+      fakeUser,                         // used by only some tests
+      fakePost,
+    }
+  }
+
+Our test is now much smaller and cleaner to read:
+
+  test('renders an error message from the server', async () => {
+    const testError = 'test error'
+    mockSavePost.mockRejectedValueOnce({data: {error: testError}})
+    const {submitButton, getByTestId} = renderEditor()     // call set up function
+
+    fireEvent.click(submitButton)
+
+    const postError = await waitForElement(() => getByTestId('post-error'))
+    expect(postError).toHaveTextContent(testError)
+    expect(submitButton).not.toBeDisabled()
+  })
 
     
-   
     
+ Test React components that use the react-router Router Provider with createMemoryHistory
+ ---------------------------------------------------------------------------------------
+    
+When you render a component that uses <Link>, <Switch> or <Route> from react-router-dom, these components are going to look for a router in the tree that does not exist. So we need to render these components in a react router. To do this we need to render main inside a 'Router' from react-router-dom. This Router also needs a browser history. However we can simulate this history in memory with createMemoryHistory from the history module.
+
+
+main.js (exports <Main>):
+
+  import React from 'react'
+  import {Switch, Route, Link} from 'react-router-dom'
+
+  const About = () => (
+    <div data-testid="about-screen">You are on the about page</div>
+  )
+  const Home = () => <div data-testid="home-screen">You are home</div>
+  const NoMatch = () => <div data-testid="no-match-screen">No match</div>
+
+  function Main() {
+    return (
+      <div>
+        <Link to="/">Home</Link>
+        <Link to="/about">About</Link>
+        <Switch>
+          <Route exact path="/" component={Home} /> 
+          <Route path="/about" component={About} />
+          <Route component={NoMatch} />
+        </Switch>
+      </div>
+    )
+  }
+  export {Main}
+
+The test:
+  // these should normally be in your jest setupTestFrameworkScriptFile
+  import 'jest-dom/extend-expect'
+  import 'react-testing-library/cleanup-after-each'
+
+  import React from 'react'
+  import {Router} from 'react-router-dom'    // our Router
+  import {createMemoryHistory} from 'history'   // the history for the router
+  import {render, fireEvent} from 'react-testing-library'
+  import {Main} from '../main'
+
+  test('main renders about and home and I can navigate to those pages', () => {
+    const history = createMemoryHistory({initialEntries: ['/']})
+    const {getByTestId, queryByTestId, getByText} = render(
+      <Router history={history}>                                
+        <Main />                                                     // main lives in the Router
+      </Router>,
+    )
+    expect(getByTestId('home-screen')).toBeInTheDocument()
+    expect(queryByTestId('about-screen')).not.toBeInTheDocument()    // query used here
+    fireEvent.click(getByText(/about/i))
+    expect(queryByTestId('home-screen')).not.toBeInTheDocument()
+    expect(getByTestId('about-screen')).toBeInTheDocument()
+  })
+
+
+
+
