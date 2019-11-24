@@ -812,6 +812,83 @@ The tricky bit is `mockSavePost.mock.calls[0][0].date`. This says that the mock 
   
   
   
+ Use generated data to improve test maintainability
+ --------------------------------------------------
+
+A critical piece to making your tests easier to maintain is using code structure and values to communicate what is important and what is not. In the example above we have a fake postPost variable. The content of that variable is irrelevant. We only care that the correct data, whatever it is, is being sent ot the server. We can randonly generate these values so that maintainers of our tests know that the content does not matter.
+
+Out old fakePost:
+
+      const fakePost = {
+        title: 'Test Title',
+        content: 'Test content',
+        tags: ['tag1', 'tag2']
+      }
+
+New random data:
+
+  import {build, fake, sequence} from 'test-data-bot'
+  
+  const postBuilder = build('Post').fields({
+    title: fake(f => f.lorem.words()),          // f is from faker, another npm library that generates random things
+    content: fake(f => f.lorem.paragraphs().replace(/\r/g, '')),      // tidy up line returns
+    tags: fake(f => [f.lorem.word(), f.lorem.word(), f.lorem.word()]),  // making an array
+  })
+
+  const userBuilder = build('User').fields({
+    id: sequence(s => `user-${s}`),
+  })
+  
+  
+Used in our test:
+
+  test('renders a form with title, content, tags, and a submit button', async () => {
+    const fakeUser = userBuilder()
+    const fakePost = postBuilder() // ...
+
+
+
+Test drive error state with react-testing-library
+------------------------------------------------------
+
+What happens when the save post request fails? We have tested the happy case but what if there’s an error in saving the user’s information? We should probably show them an error message and give them the chance to try again. 
+
+Since this is an entirely new flow, we need to add a new test. 
+
+  import {savePost as mockSavePost} from '../api'
+  
+  jest.mock('../api', () => {
+    return {
+      savePost: jest.fn(() => Promise.resolve()),  // we cant rewrite this to `reject` since it would break other tests. See below.
+    }
+  })
+
+
+  test('renders an error message from the server', async () => {
+    const testError = 'test error'  // use a variable to explicitly show that the value should not be changing
+    mockSavePost.mockRejectedValueOnce({data: {error: testError}})   // we dont need to change the above mock in a promise rejection
+    const fakeUser = userBuilder()
+    const {getByLabelText, getByText, getByTestId} = render(
+      <Editor user={fakeUser} />,
+    )
+    const fakePost = postBuilder()
+
+    getByLabelText(/title/i).value = fakePost.title
+    getByLabelText(/content/i).value = fakePost.content
+    getByLabelText(/tags/i).value = fakePost.tags.join(', ')
+    const submitButton = getByText(/submit/i)
+
+    fireEvent.click(submitButton)
+
+    const postError = await waitForElement(() => getByTestId('post-error'))  //waitForElement imported from RTL
+    expect(postError).toHaveTextContent(testError)  // once the above element has rendered we expect the correct content
+    expect(submitButton).not.toBeDisabled()     // make sure this is not disabled so that the user can try again
+  })
+
+
+
+
+
 
     
    
