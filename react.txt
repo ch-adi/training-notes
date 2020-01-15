@@ -706,7 +706,7 @@ And, another way to to conditionally apply a CSS class with the use of props:
 
 Logical errors are difficult to spot. There may be no console messages. You need to go through
 the code step by step. Go to the sources tab in the dev tools. Your code structure will exist
-under localhost. This is possible due to source maps. These are basically traslated files. 
+under localhost. This is possible due to source maps. These are basically translated files. 
 The dev tools has access to your code they way you wrote it rather than the way it is actually
 bundled and used by the browser. Set breaks points by clicking in the margin and use the normal
 step in and step out buttons. As you move throught the code move your cursor over variables 
@@ -719,7 +719,7 @@ with their current values. You can also change the state there.
 Custom error messages: error boundaries 
 
 Say you have some code that may generate errors that concern the user. For example a requested
-online resource is not available We can simulate this with a random number:
+online resource is not available. We can simulate this with a random number:
 
         const randomNum =  Math.random();
 
@@ -746,28 +746,58 @@ a lot better.
 Don't use error boundaries often. They are only for the odd case that you cannot control.
 
 
-import React, { Component } from 'react';
-
-class ErrorBoundary extends Component {
-    state = {
-        hasError: false,
-        errorMessage: ''
-    }
-
-    coponentDidCatch = (error, info) => {
-        this.setState({ hasError: true, errorMessage: error });
-    }
-
-    render() {
-        if (this.state.hasError) {
-            return <h1>{this.state.errorMessage}</h1>
-        } else {
-            return this.state.children;
-        }
-    }
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+     this.state = { error: null, errorInfo: null }
+  }
+  
+  componentDidCatch (error, errorInfo) {
+    this.setState({
+      error: error,
+      errorInfo: errorInfo
+    })
+  }
+  
+  render() {
+      if(this.state.errorInfo) {
+        return (
+          <div>
+            <h1>Oh nooo. Something Broke</h1>
+            <p>Error: {this.state.error.toString()}</p> 
+            <p>{this.state.errorInfo.componentStack}</p>
+          </div>
+        );
+      }
+      return this.props.children;
+  }
 }
 
 export default ErrorBoundary;
+
+***Super important: 
+ 1. Error boundaries do not work if the error is generated in an event handler (see more in the docs for other exceptions like async code)
+ 2. this boundary on works on a Child Component (not DOM element) of the component in which you insert the error boundary.
+ eg BuggyCounter is a completely different child of TestApp, not a <button> within it:
+ 
+	 class TestApp extends React.Component {
+
+	  render() {
+
+	    return (
+	      <div>
+		<p>This bit will stay when the error happens</p>
+		<ErrorBoundary>
+		  <BuggyCounter></BuggyCounter>
+		</ErrorBoundary>
+	      </div>
+	    );
+	  }
+	}
+
+
+
+
 */
 /* Organising Components
 
