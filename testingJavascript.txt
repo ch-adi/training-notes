@@ -331,6 +331,8 @@ In our test file we now need this:
 
     jest.mock('../utils')
 
+This line cannot be inside a test, but instead is usually placed below the import statements at the top of the file.
+
 
 
 Configuring Jest
