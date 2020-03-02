@@ -41,6 +41,20 @@ Going to meetings that could have been emails. Respect your time and remember yo
 Losing the perspective that your job is not to write code, your job is to provide value, whatever that means in your context.
 
 
+
+Signs of Intelligence
+
+Having said that, in no particular order, the signs that one is interacting with a person that has a very high level of intelligence include perceiving in that person:
+
+An appetite for information and knowledge, which includes not only curiosity, but also a veritable “need” for intellectual stimulation;
+The ability to quickly understand your arguments without the need for much explanation, perhaps even anticipating the final conclusion before you get to it;
+Identifying interesting implications and consequences of your arguments that you yourself had not considered;
+Displays of rapid perception, strong learning capacity, and substantial problem-solving abilities;
+A broad scope and/or depth of knowledge;
+The ability to perceive and appreciate the relevant talents and accomplishments of others.
+
+
+
 What are the biggest myths software engineers believe?
 
 My favourite - I know what I'm doing.
