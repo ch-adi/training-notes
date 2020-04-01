@@ -1,10 +1,16 @@
+General Ideas
 
-
-Do pet projects. Push them to github with an elegant readme. Follow all the best practices. Do not write messy code just because it's your pet project. Create a detailed portfolio out of these projects and put them out in your personal website.
+Do pet projects. Push them to github with an elegant readme. Follow all the best practices. Do not write messy code just because it's your pet project. Create a detailed portfolio out of these projects and put them out in your personal website. Not only do these provide proof of your skills, and your interest in coding beyond work, but they also are quite possibly a better way to learn and grow than your normal work.
 
 Contribute to open source projects. Even little things like improving a sentence in documentation or reporting a new bug are very important.
 
-Network!!!! Go to tech meet ups, events, conferences. Actively participate in online tech communities such as SOF.
+Network!!!! Go to tech meet ups, events, conferences. Actively participate in online tech communities such as SOF. Keep in touch with former workmates who now work elsewhere. Most jobs come from contacts, not job ads.
+
+If doing an at home code test apply professional skills, like providing a change-log with the completed code that contains quality commit messages. However, while you should treat the test like real work, don't over engineer it. Most problems are little one line bugs that need to be fixed.
+
+Update your linkedin profile and allow contacct from recruiters. Recruiters are far more liklely to contact you once you have at least a couple of years of experience.
+
+One skill a lot of employers look for is people skills/soft skills, even for software engineers.
 
 I seek to work with people who can problem solve, who are willing to learn continually, who get along with the team, and who care enough to produce quality code and systems.
 
