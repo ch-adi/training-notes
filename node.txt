@@ -6,6 +6,10 @@
 
 ******************************************
 
+Node is a JS runtime environment. It is not the JS language, but rather allows you to run JS on a server. Browsers on the other hand allow you to run JS on the client.  Both Chrome and Node create these runtimes by using the V8 JS engine. This is written in c++, and so is most of Chrome and Node. This allows JS to do anything c++ can do, say like access file systems. Chrome and Node, however provide different runtime features wrapped around the V8 engine. That is they provide differnet 'bindings' that enhance the language. For example, in a browser you  have a window and the DOM, and so the global object is `window` and that also contains a 'document` object. These are not in the language specs, but rather part of the runtime. v8 doesn't know about the DOM, but the browser will connect everything together. Instead wondow and document objects, Node supplies a `global` object and a `process`, which makes more sense on the server side.
+
+Node uses an event driven, non-blocking I/O model. External requests don't block.
+
 
 Javascript is quite a high level language. Functionality like memory menagement is abstracted away. Also, because js was created for use in browsers it lacks some other common functionality such as modules and sending files around. V8 is an open source c++ applicaiton that converts JS into machine code instructions for a variety of common microprocessor arcitectures. It is thus a JS engine, and it also meets all the ECMA script specifications for a JS engine. The advantage of v8 is that it has hooks so that it can be embedded in other c++ applications. Node is such an application. It takes v8 and extends it so that JS can be given extra functionality. This allows JS to be used outside of the browser. In particular it gives JS enough functionality to be used on a server (the client-server model is common, and the best example is on the internet, which uses http to communicate between clients and servers). A server is connected to the internet and offers services.
 
