@@ -10,7 +10,6 @@ Node is a JS runtime environment. It is not the JS language, but rather allows y
 
 Node uses an event driven, non-blocking I/O model. External requests don't block.
 
-
 Javascript is quite a high level language. Functionality like memory menagement is abstracted away. Also, because js was created for use in browsers it lacks some other common functionality such as modules and sending files around. V8 is an open source c++ applicaiton that converts JS into machine code instructions for a variety of common microprocessor arcitectures. It is thus a JS engine, and it also meets all the ECMA script specifications for a JS engine. The advantage of v8 is that it has hooks so that it can be embedded in other c++ applications. Node is such an application. It takes v8 and extends it so that JS can be given extra functionality. This allows JS to be used outside of the browser. In particular it gives JS enough functionality to be used on a server (the client-server model is common, and the best example is on the internet, which uses http to communicate between clients and servers). A server is connected to the internet and offers services.
 
 Some features missing from plan js that are addressed in node:
@@ -21,6 +20,62 @@ Some features missing from plan js that are addressed in node:
 - communicate over the internet - node can deal with TCP/IP requests 
 - accept requests and send responses - messages are built into node and use HTTP
 - deal with work that takes a long time - async methods and event loops. Streams for performance
+
+
+Running Node in the Command Line
+----------------------------------
+
+$ node app.js [arguments]
+
+Any arguments that you pass in are attached to process.argv, which is the "argument vector". The first two members of this vector are always the path to the node executable, and the second is the path to the file, which is app.js here.
+
+$ node app.js add --title-"first note"
+
+[
+  'C:\\Program Files\\nodejs\\node.exe',
+  'C:\\Users\\cliff\\Documents\\Cliff\\repos\\rtl\\node-course\\notes-app\\app.js',       
+  'add',
+  '--title=first note'
+]
+
+A good package to parse these strings is yargs. In addition to producing a more useful arguments object, it will also enable you pass in --help and --version when running your app.js. It will automatically find the relevant content for the console.
+
+Say we want four commands in our notes app: add, remove read, list. Here we add the 'add' command:
+
+
+app.js
+  yargs.command({
+      command: 'add',
+      describe: 'Add a new note',
+      handler: function() {
+          console.log('adding a new note')
+      }
+  });
+
+  console.log(yargs.argv)
+  
+  
+$ node app.js --help
+  
+  app.js [command]
+
+  Commands:
+    app.js add  Add a new note
+
+  Options:
+    --help     Show help  
+    --version  Show version number  
+
+$ node app.js add --title="first note"
+
+  adding a new note
+  { _: [ 'add' ], title: 'first note', '$0': 'app.js' }
+  
+  
+  
+
+
+
 
 
 
@@ -51,7 +106,7 @@ greet.js:
 
 app.js
 
-    // to just get that first line from greet running
+    // to just get that first line from greet running (ie requiring a module means that all it's code will run)
     // require('./greet');
 
     // now we use the idea that the require function returns 
