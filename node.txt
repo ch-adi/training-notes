@@ -44,14 +44,36 @@ Say we want four commands in our notes app: add, remove read, list. Here we add 
 
 
 app.js
-  yargs.command({
-      command: 'add',
-      describe: 'Add a new note',
-      handler: function() {
-          console.log('adding a new note')
-      }
-  });
+yargs.command({
+    command: 'add',
+    describe: 'Add a new note',   // --help description
+    builder: {
+        title: {
+            describe: 'Note title',
+            demandOption: true,  // must have a title argument
+            type: 'string'  // title must be of type string
+        },
+        body: {
+            describe: 'Note body',
+            demandOption: true,
+            type: 'string'
+        }
+    },
+    handler: function(argv) {
+        console.log('adding a new note', argv)
+    }
+});
 
+yargs.command({
+    command: 'remove',
+    describe: 'Remove a note',
+    handler: function() {
+        console.log('Removing a note')
+    }
+});
+
+
+  yargs.parse(); // needed to run the above command
   console.log(yargs.argv)
   
   
@@ -66,10 +88,14 @@ $ node app.js --help
     --help     Show help  
     --version  Show version number  
 
-$ node app.js add --title="first note"
+$ node app.js add --title="first note" --body="first note body"
 
-  adding a new note
-  { _: [ 'add' ], title: 'first note', '$0': 'app.js' }
+  adding a new note {
+    _: [ 'add' ],
+    title: 'first note',
+    body: 'first note body',
+    '$0': 'app.js'
+  }
   
   
   
@@ -274,6 +300,14 @@ app.js:
 
     import * as greetr from 'greet';
     greetr.greet()
+
+
+
+
+Saving and reading JSON to/from file
+---------------------------------------
+
+
 
 
 
