@@ -2287,7 +2287,7 @@ Page speed relates to user engagement.
 
 If you inspect an image with the dev tools you will see it's actual size and the size being displayed on the website. Just hover your mouse of the element in the elemetns tab. Usually there is quite a difference is sizing. However, we do want the image size to be twice that of the diplayed size. Hi res displays need larger file so that they appear sharp. Eg, is the image is 361 x 240 pixels in the dev tools, then we'll round up to 375 and double that to get 750px as a target. We can reduce the image to this dimension width.
 
-You can use http://optimizilla.com.websiteoutlook.com/ to compress large images.
+You can use https://imagecompressor.com/ to compress large images.
 
 
 
