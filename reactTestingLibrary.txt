@@ -166,7 +166,7 @@ Conceptually, the render method looks like this:
 
 
 
-Avoid Memoory Leaks with Cleanup
+Avoid Memory Leaks with Cleanup
 ----------------------------------------------------
 The render method actually renders your component to the document body (document.body). This is so that react events can be handled correctly. This means that if you have multiple tests that render components, you could fill up the document.body with old components that are never unmounted and cause trouble for your tests (because they’re not isolated).
 
@@ -254,6 +254,7 @@ In this test there are three examples of how we might find and test the text in 
 A huge number of event types exist on fireEvent. Examples include click, copy, and paste.  
   
   
+Update: the user library now makes these actions more userfocused. https://github.com/testing-library/user-event
 
 
 Testing Props update with `rerender`
@@ -265,7 +266,7 @@ We can pass in props to the component under test with the rerender method. Here 
       const { getByLabelText, getByTestId, rerender, queryByText, debug } = render(<FavNumber />)
 
       const input = getByLabelText(/favorite number/i)
-      fireEvent.change(input, { target: { value: 10 } })
+      fireEvent.change(input, { target: { value: 10 } }) // could also do input.value = 10;
 
       expect(getByTestId('error-message')).toHaveTextContent(
           /the number is invalid/i,
@@ -274,8 +275,10 @@ We can pass in props to the component under test with the rerender method. Here 
       // rerender with a new prop that will make the user's error message disappear
       rerender(<FavNumber max={10}/>)
 
-      // example of how to test something does not exist
-      expect(queryByText(/the number is invalid/i)).toBe(null)
+      // example of how to test something does not exist: need a query method so that an error is not thrown.
+      // For all queries variations see https://testing-library.com/docs/react-testing-library/cheatsheet
+      // might also see some better assertions here: https://github.com/testing-library/jest-dom
+      expect(queryByText(/the number is invalid/i)).toBe(null)  // eg could use not.toBeInTheDocument()
   })
 
 
@@ -392,110 +395,34 @@ To deal with the async part, we make the test callback async and then await the 
 
 
 
-
-
-
-
-
-This component uses an async HTTP API call in a method named loadGreeting:
-
-  @observer
-  export class GreetingLoader extends Component {
-      private inputRef: React.RefObject<HTMLInputElement> = React.createRef()
-
-      @observable
-      greeting = '';
-
-      @action
-      loadGreetingForInput = async (e: React.FormEvent<HTMLFormElement>) => {
-          e.preventDefault()
-          const { data } = await loadGreeting(this.inputRef.current.value)  // async API call
-          this.greeting = data;
-      }
-
-      render() {
-          return (
-              <form onSubmit={(e) => this.loadGreetingForInput(e)}>
-                  <label htmlFor="name">Name</label>
-                  <input id="name" ref={this.inputRef} />
-                  <button type="submit">Load Greeting</button>
-                  <div data-testid="greeting">{this.greeting}</div>
-              </form>
-          )
-      }
-  }
-
-  import React, { ReactElement } from 'react'
-  import '@testing-library/jest-dom/extend-expect'
-  import { render, cleanup, fireEvent, wait } from '@testing-library/react'
-  import { GreetingLoader } from './greeting'
-  
-  // ***
-  //after mocking a module below we used this import to help with the last two assertions
-  // ***
-  import { loadGreeting as mockLoadGreeting } from '../api/loadGreeting'
-
-  // making an async mock
-  jest.mock('../api/loadGreeting', () => {
-      return {
-          loadGreeting: jest.fn(value =>
-              Promise.resolve({ data: value })
-      ,)}
-  })
-
-  afterEach(cleanup)
-
-  test('Submitted greeting is displayed', async () => {
-      const { getByLabelText, getByTestId, getByText, debug } = render(<GreetingLoader />)
-
-      const testInputValue = 'Bob';
-
-      const input = getByLabelText(/Name/i)
-      fireEvent.change(input, { target: { value: testInputValue } })
-
-      const sumbutButton = getByText(/Load Greeting/i)
-      fireEvent.click(sumbutButton);
-
-      // how to test async code with `wait`, which is imported directly from RTL
-      await wait(() => expect(getByTestId('greeting')).toHaveTextContent(
-          testInputValue,
-      ))
-
-      expect(mockLoadGreeting).toHaveBeenCalledTimes(1);
-      expect(mockLoadGreeting).toHaveBeenCalledWith(testInputValue);
-  })
-
-
-
-
-Mock HTTP Requests with Dependency Injection in React Component Tests
+Mock HTTP Requests with 'Dependency Injection' in React Component Tests
 ----------------------------------------------------------------------
-Generally the jest.mock approach in the previous section is preferable because it doesn't require that you change your implementation. However if you an environment that doesn't support the Jest mocking capabilities we can inject a dependancy with the React defaultProp feature.
+Generally the jest.mock approach in the previous section is preferable because it doesn't require that you change your implementation. However if you an environment that doesn't support Jest mocking capabilities then we can inject a dependancy with the React defaultProp feature.
 
-In the test file we remove the explicit mock of the API method/request and move it into the test block. It is then passed in as a prop.
+Using the previous loadGreeting example we update the loadGreeting import so that it becomes a default prop object. Then we will not break the rest of our code. We also want to to change how it is imported so that we don't have naming conflicts.
+
+  import React from 'react'
+  import * as api from './api'
+
+  function GreetingLoader({loadGreeting = api.loadGreeting}) { // ...
+  
+
+
+
+In the test file we remove the explicit mock of the API method/request. This means that we must also remove the import of loadGreeting. Without jest.mock() this would only ever refer to the real function. 
 
     // REMOVED import {loadGreeting as mockLoadGreeting} from '../api'
     // REMOVED jest.mock(...)
 
-    test('loads greetings on click', () => {
-      const mockLoadGreeting = jest.fn(subject =>
-        Promise.resolve({data: {greeting: `Hi ${subject}`}})
-      )
-      // now the mock is passed in as a prop to the component under test
-      const {getByLabelText, getByText, getByTestId} = render(<GreetingLoader loadGreeting={mockLoadGreeting} />)
-      // ... as before
-    
- In our component we now use the api method as a default prop. If we are not in test mode that the real API method will be called:
- 
-   class GreetingLoader extends Component {
-    static defaultProps = {loadGreeting}
-    // ...
-    loadGreetingForInput = async e => {
-      //...
-      const {data} = await this.props.loadGreeting(this.inputRef.current.value)  // this method is now on props
-      //...
-    }
+test('load greetings on click with dependancy injection', async () => {
+  const userName = 'Bob';
+  const testGreeting = 'TEST_GREETING';
+  
+  const mockLoadGreeting = jest.fn()
+  mockLoadGreeting.mockResolvedValueOnce({data: { greeting: testGreeting}})
 
+  // all the rest is the same
+});
 
 
 
@@ -504,7 +431,7 @@ Mocking an async 3rd party library function
 
 To properly mock a third party component, you need to simulate the same API.
 
-In this example we have 3rd party library called CSSTransition that will allow for a fade in timeout. When a user toggles a button then a hidden message will appear 1 second later.
+In this example we have 3rd party library called CSSTransition that will allow for a fade in timeout. When a user toggles a button then a hidden message will appear 1 second later. We could use await wait(() => /*expect something*/) as shown above. However we don't want out tests to take so long, and it's preferable if the test code is not dealing with async behaviour. So instead we will mock the animation library with a sync mock.
 
 
 hidden-message.js:
@@ -536,7 +463,7 @@ hidden-message.js:
     }
   }
 
-In our test, we don't want to wait 1,000 milliseconds before we can verify that the children have been added or removed from the document. We're going to mock out the CSSTransition component from react-transition-group. We see that CSSTransition takes an `in` prop to know whether or not the children should be rendered. So our mock component will also take this prop.
+We see that CSSTransition takes an `in` prop to know whether or not the children should be rendered. So our mock component will also take this prop.
 
 Our test:
 
