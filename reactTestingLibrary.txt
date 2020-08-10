@@ -321,8 +321,81 @@ In this example we have a form without an associated label. We can use jest-axe 
 
 
 
-Mock HTTP Requests with jest.mock and async expectations
+Mock Async Requests with jest.mock and async expectations
 --------------------------------------------
+
+Mocking a function, say to a server or some other place that is not under test, will mean that the test will use a mocked version of that function. Jest will also replace that function in the code under test. 
+
+Here we have a component that async loads a greeting from a server when a button is clicked. It does this via a function called loadGreeting.
+
+  import React from 'react'
+  import {loadGreeting} from './api'
+
+  function GreetingLoader() {
+    const [greeting, setGreeting] = React.useState('')
+    async function loadGreetingForInput(e) {
+      e.preventDefault()
+      const {data} = await loadGreeting(e.target.elements.name.value)
+      setGreeting(data.greeting)
+    }
+    return (
+      <form onSubmit={loadGreetingForInput}>
+        <label htmlFor="name">Name</label>
+        <input id="name" />
+        <button type="submit">Load Greeting</button>
+        <div aria-label="greeting">{greeting}</div>
+      </form>
+    )
+  }
+
+  export {GreetingLoader}
+
+In our test we will mock that async loadGreeting function. First, for clarity, we will give that function an alias within the import statement.
+
+We also want to test how the mocked function is called. We have 'poked a hole in reality' so we want to make sure that everything about calling that function work as expected.
+
+To deal with the async part, we make the test callback async and then await the wait function from RTL.
+
+
+  import React from 'react';
+  import user from '@testing-library/user-event'
+  import { render, wait} from '@testing-library/react';
+  import { loadGreeting as mockLoadGreeting } from './api'  // give alias for clarity
+
+  jest.mock('./api') // all functions exposed in this module are mocked
+
+  test('load greetings on click', async () => {
+    const userName = 'Bob';
+    const testGreeting = 'TEST_GREETING';
+
+    // declare what value will be resolved from the mocked function
+    mockLoadGreeting.mockResolvedValueOnce({data: { greeting: testGreeting}})
+
+    // set up the test
+    const { getByText, getByLabelText } = render(<GreetingLoader />);
+    const input = getByLabelText(/name/i)
+    user.type(input, userName);
+    const button = getByText('Load Greeting')
+    user.click(button)
+
+    // test that the mocked function was correctly called
+    expect(mockLoadGreeting).toHaveBeenCalledWith(userName)
+    expect(mockLoadGreeting).toHaveBeenCalledTimes(1)
+
+    // wait for an expected value. Otherwise Jest complains that it does
+    // not how to long to wait for the async work to complete:
+    // Warning: An update to GreetingLoader inside a test was not wrapped in act(...).
+    await wait(() => {
+      expect(getByLabelText(/greeting/i)).toHaveTextContent(testGreeting);
+    })
+  });
+
+
+
+
+
+
+
 
 This component uses an async HTTP API call in a method named loadGreeting:
 
