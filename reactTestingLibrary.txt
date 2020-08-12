@@ -497,7 +497,7 @@ Our test:
 Error Boundaries
 ---------------------------------------------------
 
-Imagine that we have an error boundary component. It wraps around the code at a high level, catching errors and sending them off to a server.
+Imagine that we have an error boundary component. It wraps around the code at a high level, using the componentDidMount lifecycle method to catch errors and stop the app crashing unexpectedly. In this case our error boundary will simply report errors back to the server via a reportError method from the server API. 
 
   import React from 'react'
   import {reportError} from './api'
