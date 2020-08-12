@@ -2169,9 +2169,9 @@ Since we have constructed an object via a function, we call the function a 'func
 
 [insert the inheritance section here????]
 
-So when we use a function constructor how do we set the prototype? Well it is actually supplied automatically. Recall that functions are special objects because they have some extra properties, such as 'name' (which can be anonymouse) and 'code' (which holds the code that is executed when you invoke the function). Another property is 'prototype'. It is first created as an empty object. Unless you use a function as a function consturctor it is never used. However, once you use the new operator it does something. 
+So when we use a function constructor how do we set the prototype? Well it is actually supplied automatically. Recall that functions are special objects because they have some extra properties, such as 'name' (which can be anonymous) and 'code' (which holds the code that is executed when you invoke the function). Another property is 'prototype'. It is first created as an empty object. Unless you use a function as a function consturctor it is never used. However, once you use the new operator it does something. 
 
-This is very confusing, because if use myFuncObject.prototype you may well think you are accessing myFuncObject's prototype. To do that you actually need __proto__. Instead, .prototype is the prototype of any object created from your function object. So, when you construct an object from myFuncObject with the new keyword, say newObject, then newObject's __proto__ is myFuncObject's .prototype .
+This is very confusing, because if we use myFuncObject.prototype you may well think you are accessing myFuncObject's prototype. To do that you actually need __proto__. Instead, .prototype is the prototype of any object created from your function object. So, when you construct an object from myFuncObject with the new keyword, say newObject, then newObject's __proto__ is myFuncObject's .prototype .
 
 
     function Person(firstName, lastName) {
@@ -2202,30 +2202,30 @@ And you can add to the constructors .prototype property after it has made object
 
 The advantage of keeping properties and methods in the prototype is that we save memory. All the constructed objects point to the same properties and methods at the same location in memory. So it's better to put your methods on the prototype. 
 
-ReAt any rate here is a counter-example in which each object gets its own non-proto methods:
+At any rate here is a counter-example in which each object gets its own non-proto methods:
 
     function Rectangle(height, width) {
-    this.height = height;
-    this.width = width;
-    this.corners = 4; //applies to all objects
-    this.calcArea = function() { //method definition
-        return this.height * this.width;
-    };
-        this.calcPerimeter = function() {
-        return this.height*2 + this.width*2;
-    };
+	    this.height = height;
+	    this.width = width;
+	    this.corners = 4; //applies to all objects
+	    this.calcArea = function() { //method definition
+		return this.height * this.width;
+	    };
+	    this.calcPerimeter = function() {
+		return this.height*2 + this.width*2;
+	    };
     }
 
     var rex = new Rectangle(7,3);
     var area = rex.calcArea();
     var perimeter = rex.calcPerimeter();
 
-Danger warning: we know that the new keyword creates an empty object of the contructor's type, has the contructor return an object if there is no 'return' statement in the constructor, and points __proto__ for the new object back to .prototype in the constructor. But, the constructor is still just a function. So, if we forget to use 'new' then the function is executed in the normal way and will return undefined. No methods and properties will be available to this new binding of undefined type. Using a captial letter for constructor names can help both you and linting tools.
+Danger warning: we know that the new keyword creates an empty object of the contructor's type, and the contructor return an object if there is no 'return' statement in the constructor, and points __proto__ for the new object back to .prototype in the constructor. But, the constructor is still just a function. So, if we forget to use 'new' then the function is executed in the normal way and will return undefined. No methods and properties will be available to this new binding of undefined type. Using a captial letter for constructor names can help both you and linting tools.
 
 JS also supplies some built in function constructors (we saw Object() above). 
 
     var a = new Number(3);
-    console.log(a); // Number {3}__proto__: Number[[PrimitiveValue]]: 3 // ie an object, not a primitive
+    console.log(a); // Number {3}__proto__: Number[[PrimitiveValue]]: 3 // i.e. an object, not a primitive
     console.log(a.toFixed(2)); // number methods are available from the protoype chain (Number.prototype).
 
 In this example the primitive value is still there, but we say it is 'boxed inside' the object. 'new' returns objects! 
