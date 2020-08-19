@@ -545,7 +545,7 @@ beforeEach(() => {
   // Eventhough the tests are passing (ie we are correctly handling errors) 
   // jest-dom will continue to log out the errors in the console via console.error. 
   // Since this makes the test output noisy very noisy we'll mock out console.error
-  jest.spyOn(console, 'error').mockImplementation(() => {})
+  jest.spyOn(console, 'error').mockImplementation(() => {})  // notes on spyOn at the bottom of this section and see clean up in afterEach()
 })
 
 afterEach(() => {
@@ -581,7 +581,7 @@ test('calls reportError and renders that there was a problem', () => {
   
   // error and info are the arguments passed in the server request: reportError(error, info)
   // initially make the next two contants null so that the test fails and we can see what they should be.
-  const error = expect.any(Error)
+  const error = expect.any(Error)  // this works too: expect(mockReportError.mock.calls[0][0]).toBeInstanceOf(Error)
   const info = {componentStack: expect.stringContaining('Bomb')}  // info is react specific info
   expect(mockReportError).toHaveBeenCalledWith(error, info)
 
@@ -603,12 +603,53 @@ test('calls reportError and renders that there was a problem', () => {
       <Bomb />
     </ErrorBoundary>,
   )
-  fireEvent.click(getByText(/try again/i))
+  fireEvent.click(getByText(/try again/i))  //(could also use user.click()
 
   expect(mockReportError).not.toHaveBeenCalled()
   expect(console.error).not.toHaveBeenCalled()
   expect(container).not.toHaveTextContent('There was a problem')
 })
+
+
+
+******Extra on SpyOn  (from https://medium.com/@rickhanlonii/understanding-jest-mocks-f0046c68e53c): *****
+  - Case 1: keep the original implementation of a function but test how it is being called
+  - Case 2: temporarily mock out a function but then return it to its original state
+  
+  Case 1 example:
+  
+  import * as app from "./app";
+  import * as math from "./math"; // supplies math functions that are wrapped up in app.js code
+
+  test("calls math.add", () => {
+    const addMock = jest.spyOn(math, "add");
+
+    // calls the original implementation
+    expect(app.doAdd(1, 2)).toEqual(3);
+
+    // and the spy stores the calls to add
+    expect(addMock).toHaveBeenCalledWith(1, 2);
+  });
+  
+  
+  Case 2 example:
+  
+  import * as app from "./app";
+  import * as math from "./math";
+
+  test("calls math.add", () => {
+    const addMock = jest.spyOn(math, "add");
+
+    // override the implementation
+    addMock.mockImplementation(() => "mock");
+    expect(app.doAdd(1, 2)).toEqual("mock");
+
+    // restore the original implementation
+    addMock.mockRestore();
+    expect(app.doAdd(1, 2)).toEqual(3);
+  });
+
+*******
 
 
 Testing a button is disabled after a click:
