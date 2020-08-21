@@ -407,8 +407,6 @@ Using the previous loadGreeting example we update the loadGreeting import so tha
   function GreetingLoader({loadGreeting = api.loadGreeting}) { // ...
   
 
-
-
 In the test file we remove the explicit mock of the API method/request. This means that we must also remove the import of loadGreeting. Without jest.mock() this would only ever refer to the real function. 
 
     // REMOVED import {loadGreeting as mockLoadGreeting} from '../api'
@@ -650,6 +648,17 @@ test('calls reportError and renders that there was a problem', () => {
   });
 
 *******
+
+
+
+
+React Hooks 
+-----------------------------------------------
+
+
+
+
+
 
 
 Testing a button is disabled after a click:
