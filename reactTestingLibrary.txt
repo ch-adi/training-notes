@@ -655,6 +655,75 @@ test('calls reportError and renders that there was a problem', () => {
 React Hooks 
 -----------------------------------------------
 
+React's act() is wrapped and supplied by RTL. 
+
+
+
+Also, instead of just creating a re-usable react component for your react hook component you can use renderHook.
+
+  
+  import {renderHook, act} from '@testing-library/react-hooks'
+  import {useCounter} from '../use-counter'
+
+  test('exposes the count and increment/decrement functions', () => {
+    const {result} = renderHook(useCounter)
+    expect(result.current.count).toBe(0)
+    act(() => result.current.increment())
+    expect(result.current.count).toBe(1)
+    act(() => result.current.decrement())
+    expect(result.current.count).toBe(0)
+  })
+
+  test('allows customization of the initial count', () => {
+    const {result} = renderHook(useCounter, {initialProps: {initialCount: 3}})
+    expect(result.current.count).toBe(3)
+  })
+
+  test('allows customization of the step', () => {
+    const {result} = renderHook(useCounter, {initialProps: {step: 2}})
+    expect(result.current.count).toBe(0)
+    act(() => result.current.increment())
+    expect(result.current.count).toBe(2)
+    act(() => result.current.decrement())
+    expect(result.current.count).toBe(0)
+  })
+  
+  // Rerender is also available from renderHook
+  
+  test('the step can be changed', () => {
+    const {result, rerender} = renderHook(useCounter, {
+      initialProps: {step: 3},
+    })
+    expect(result.current.count).toBe(0)
+    act(() => result.current.increment())
+    expect(result.current.count).toBe(3)
+    rerender({step: 2})
+    act(() => result.current.decrement())
+    expect(result.current.count).toBe(1)
+  })
+
+
+  
+  Otherwise we would have needed some kind of set up function function for each test:
+  
+   function setup({initialProps} = {}) {
+    const result = {}
+    function TestComponent(props) {
+      result.current = useCounter(props)
+      return null
+    }
+    render(<TestComponent {...initialProps} />)
+    return result
+  }
+
+  test('exposes the count and increment/decrement functions', () => {
+    const result = setup()
+    expect(result.current.count).toBe(0)
+    act(() => result.current.increment())
+    expect(result.current.count).toBe(1)
+    act(() => result.current.decrement())
+    expect(result.current.count).toBe(0)
+  })
 
 
 
@@ -936,6 +1005,73 @@ Since this is an entirely new flow, we need to add a new test.
   })
 
 
+Test unmounting a react component
+-----------------------------------------------
+
+Here we have a test that could cause a false positive. There is an interval of 10 seconds and so the test must know to wait that long.
+We need to use the the hest useFakeTimers method. However this method is one of the few times you need to use React's act() method.
+
+
+  import React from 'react'
+
+  function Countdown() {
+    const [remainingTime, setRemainingTime] = React.useState(10000)
+    const end = React.useRef(new Date().getTime() + remainingTime)
+    React.useEffect(() => {
+      const interval = setInterval(() => {
+        const newRemainingTime = end.current - new Date().getTime()
+        if (newRemainingTime <= 0) {
+          clearInterval(interval)
+          setRemainingTime(0)
+        } else {
+          setRemainingTime(newRemainingTime)
+        }
+      })
+      // commenting out this line will cause the test fail: exactly what we want. When we unmount we want to clear the interval
+      return () => clearInterval(interval) 
+    }, [])
+    return remainingTime
+  }
+
+  export {Countdown}
+  
+  
+  
+import React from 'react'
+import {render, act} from '@testing-library/react'
+import {Countdown} from '../countdown'
+
+// prevent messy error logging intthe console
+beforeAll(() => {
+  jest.spyOn(console, 'error').mockImplementation(() => {})
+})
+
+// stop the test leaking
+afterAll(() => {
+  console.error.mockRestore()
+})
+
+afterEach(() => {
+  jest.clearAllMocks()
+  jest.useRealTimers()
+})
+
+test('does not attempt to set state when unmounted (to prevent memory leaks)', () => {
+  jest.useFakeTimers()
+  const {unmount} = render(<Countdown />)
+  unmount()
+  act(() => jest.runOnlyPendingTimers())
+  expect(console.error).not.toHaveBeenCalled()
+})
+
+
+
+
+
+
+
+
+
 
 Sharing Code betwen tests
 --------------------------------
@@ -1215,3 +1351,5 @@ As we have done previously, we can also create a custom render function for Redu
   }
 
 You could also add other providers, like theme providers.
+
+
