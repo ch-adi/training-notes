@@ -132,6 +132,24 @@ Tack on:
     )
 
 
+Extra on getByText: what if two element share the same text? For example we might be on a confirm page, with the title 'Confirm' and also there might be a 'confirm' button.
+Here something like getByText(/confirm/i) will show a warning. RTL will find two matching elements and then ask if we actually wanted to use getAllByText. In this case we want to click on the submit button so, so we will supply getByText with an extra argument. 
+
+  fireEvent.click(getByText(/confirm/i, {selector: 'button'}))
+  
+If we are doing some async work, particuarly in an integration test, then we could use an await. However we can clean things up even further with findBy. This is async and automatically retries for you.
+
+  expect(getByLabelText(/food/i)).toHaveTextContent(testData.food)
+
+becomes:
+
+  expect(await findByLabelText(/food/i)).toHaveTextContent(testData.food)
+  
+  
+
+  
+
+
 Render from react-testing-library
 ------------------------------------
 
