@@ -683,9 +683,44 @@ V8 is synchronous, so any work related to the callback is again placed in v8's o
 
 Streams and Buffers
 
-A buffer is a temporary holding place for data while that data is being moved from one place to another. It is intentionally limited in size so that the temporary data is not stored for long. Usually this data is handled by an object called a 'stream'.
 
-A stream is a sequence of data moving over time. Within it are pieces of data that are eventually combined into a whole. 
+Streams are one of the fundamental concepts that power Node.js applications.
+
+They are a way to handle reading/writing files, network communications, or any kind of end-to-end information exchange in an efficient way.
+
+Streams are not a concept unique to Node.js. They were introduced in the Unix operating system decades ago, and programs can interact with each other passing streams through the pipe operator (|).
+
+For example, in the traditional way, when you tell the program to read a file, the file is read into memory, from start to finish, and then you process it.
+
+Using streams you read it piece by piece, processing its content without keeping it all in memory.
+
+Streams basically provide two major advantages using other data handling methods:
+
+    Memory efficiency: you don’t need to load large amounts of data in memory before you are able to process it
+    Time efficiency: it takes way less time to start processing data as soon as you have it, rather than waiting till the whole data payload is available to start
+
+Non-stream example:
+
+  const http = require('http')
+  const fs = require('fs')
+
+  const server = http.createServer(function (req, res) {
+    fs.readFile(__dirname + '/data.txt', (err, data) => {
+      res.end(data)
+    })
+  })
+  server.listen(3000)
+
+If the file is big, the operation will take quite a bit of time. Here is the same thing written using streams:
+
+  const http = require('http')
+  const fs = require('fs')
+
+  const server = http.createServer((req, res) => {
+    const stream = fs.createReadStream(__dirname + '/data.txt')
+    stream.pipe(res)
+  })
+  server.listen(3000)
 
 
 
