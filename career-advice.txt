@@ -100,6 +100,26 @@ Charasmatic People
 5. Ask questions about others
 
 
+Salary
+
+Four things helped me make significant increases
+
+Choosing the right stack. When I switched from Funding Circle to Elsevier a big reason apart from money was that I wanted to learn AWS, Java and React. That was a fantastic decision. Those three are extremely popular. When recruiters get in touch they still mention my great experience at Elsevier. I always agree and thank them sincerely… even though I forgot most of what I did at that particular job!
+Getting better and becoming more senior. For me it took only three years until someone was ready to give me the title senior engineer. Sure, there were some people ten years older giving me snide looks, but I got it nonetheless. To get there you will have to continue studying perpetually. If you have no degree look up MIT, Cambridge or other top uni syllabuses. They’re usually quite open about the content of their courses. You will be able to find free lectures and great book recommendations. This is how I back filled my missing CS knowledge. This takes years because it’s hard. If you’re lucky to have chosen a technical degree and already have it then I suggest invest more in softer skills. Uncle Bob has a few good books and there are plenty others that will help you improve. A lot of the things you will learn are quite theoretical but you’ll be surprised how important it is to be able to sound smart on the job.
+Not being attached for the wrong reasons. Some people become too attached to their employer and are afraid to look elsewhere. They believe that the amount of time they spend somewhere matters. That’s stupid, don’t be like that. When push comes to shove, your employer will not hesitate to cut you loose. Don’t hesitate to cut them loose either when it’s right for you.
+
+Many companies have a cap (something like a few percent) on how much of a raise they can give you. In a market where software engineers are in demand, I noticed that in many cases someone else will always be prepared to beat that cap and offer you more. Use this to your advantage.
+Negotiating well. This is extremely important. I had colleagues who were ten to fifteen years more experienced than me and at the same time they earned less. They were all very competent people but the recruiter got the better of them at the negotiating table, simple as that. Until I got to Dow Jones, I always accepted the first offer on the table. I didn’t even consider playing competing offers against each other because I was so happy to get a job. Big mistake. If you’re afraid to even ask for more than all that’s happened is that you got out-negotiated at the first step. That’s all.
+
+For example, Dow Jones initially offered me £44k. I decided to put them on hold. Another offer came in at £47k. I called Dow Jones and asked them to increase their offer. They went up to £50k. The competing company matched that offer. Dow Jones then went up to £53k at which point I accepted. Still a mistake, but not as big as it would have been at £44k.
+Always remember: your income is not a simple measure of how much you work - it depends much more on what you can negotiate. This is the reason there are people right now making millions per day doing way less than you and I.
+
+Points one to three, becoming more experienced, competent as well as more confident, are really just ways to improve on your negotiating position. You can also move to a new location, you can become more popular, you can become needed, you can become influential, you can become better looking through sports, you can work on your charm or you can have your current or prospective employer worried about missing out on you.
+
+For some time I thought it’s all about skill and the company will pay me accordingly, and I regret that. Whoever is hiring you will do better the cheaper they get you. Do learn to exercise pressure in the right amounts, because you will never get more unless you ask for it.
+
+If you do keep improving and play your cards well your salary will go up and it will go up quickly.
+
 
 
 Why is Germany so Successful
