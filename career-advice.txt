@@ -155,6 +155,9 @@ These guys are not just bad, they are indifferent and irresponsible. They unfort
 
 
 
+To interpret the question slightly differently, my biggest red flag that indicates early that the rest of the interview may be problematic is when the candidate dives into writing code before completely mapping out the problem. Even if they eventually succeed, the resultant code can be a mess of detours as they try to do course corrections ad problems arise.
+
+
 
 Junior devs:
 
