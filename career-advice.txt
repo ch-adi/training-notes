@@ -248,6 +248,10 @@ Networks : Computer Networking - A Top Down approach is just the best book for i
 Programming : just learn a few programming languages (C is mandatory*) and solves stuff at TopCoder, ProjectEuler, HackerRank etc
 
 
+I would definitely expect anyone who lays claim to being “a programmer” to be able to create a linked list from scratch. This is easy stuff…programming 101. If you can’t do that - go back and learn more stuff.
+I would expect everyone who is ready to get a job as a programmer to be able to write at least one kind of sort algorithm from scratch (bubble-sort or insertion sort, for example) without needing to look up that algorithm. Sure, someone who only just learned to program might have problems - but if you’re ready for the job market - then this is not an unreasonable demand.
+I would NOT expect anyone to be able to implement Quicksort or Dijkstra’s algorithm from scratch unless they are provided with a decent description of the algorithm in advance. I’ve been a highly successful programmer for 45 years and I probably couldn’t do either of those things without at least reading the Wikipedia article to refresh my memory. I work in the field of realtime 3D graphics where I don’t need to know the inner workings of Quicksort (but I do know how to use the C/C++ qsort function!) and Dijkstra’s algorithm is something I’ve only used maybe twice - and had to look up both times!
+I would expect a senior developer to be able to tell me the “big-O” performance of Quicksort, to know under what circumstances you might not want to use it - and to at least know what Dijkstras’ algorithm does - even if unable to describe how it works.
 
 
 
